@@ -1,3 +1,9 @@
+> **LVM Presenter fork:** This repository preserves FreeShow as the presentation
+> baseline for La Voz Misionera. Product boundaries and the initial keep/adapt/
+> defer audit are recorded in [docs/fork-audit.md](docs/fork-audit.md). FreeShow's
+> GPL-3.0 license remains in force. The interface and package are unchanged at
+> this stage.
+
 <p align='center'>
  <a href='https://freeshow.app/'>
   <img src='https://github.com/ChurchApps/FreeShow/assets/17619496/02ac9807-1f47-47fc-b895-b35f857c2b57' width=150 />
