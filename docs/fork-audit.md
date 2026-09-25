@@ -14,6 +14,7 @@ Base: FreeShow `13879edffb94600d563479a212fb16ebc7ce4040` (`1.6.6-beta.3`), pres
 | Adaptar | Identidad | El repositorio se llama `lvm-presenter`, pero la UI y el paquete siguen llamándose FreeShow durante el baseline. |
 | Posponer | Cloud y cuentas externas | `src/electron/cloud/` y proveedores externos se investigarán después de que funcione un servicio local sin Internet. |
 | Investigar | Remote y streaming | Verificar capacidades y permisos reales con una instalación de escritorio antes de prometerlas como parte de LVM. |
+| Eliminar | Nada aprobado todavía | No se retira código del fork base hasta conocer las dependencias del primer culto integrado. |
 
 ## Baseline
 
