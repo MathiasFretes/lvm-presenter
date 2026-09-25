@@ -8,7 +8,7 @@
     "author": "ChurchApps <support@livecs.org>",
     "license": "GPL-3.0",
     "engines": {
-        "node": ">=22.12.0"
+        "node": ">=22.22.2"
     },
     "overrides": {
         "shell-quote": "^1.8.4",
@@ -21,6 +21,7 @@
         "rebuild-osr": "electron-rebuild -f -w osr-capture",
         "---DEVELOPMENT---": "",
         "start": "node scripts/start.js",
+        "lvm:service-to-project": "node scripts/lvm/service-to-project.mjs",
         "start:old": "npx cross-env NODE_ENV=development npm-run-all -p -r build:frontend:dev start:electron",
         "build:frontend:dev": "npx cross-env NODE_ENV=development vite",
         "start:electron": "npm-run-all -p build:electron:dev:watch start:electron:dev",
@@ -53,6 +54,7 @@
         "---CHECKING---": "",
         "test": "npm-run-all -s test:unit test:playwright test:format test:svelte",
         "test:unit": "vitest run --config config/testing/vitest.config.ts",
+        "test:lvm": "node --test src/lvm/*.test.mjs",
         "test:playwright": "npx playwright test --config config/testing/playwright.config.ts",
         "test:format": "npx prettier --config config/formatting/.prettierrc.yaml --check src scripts",
         "test:svelte": "svelte-check",
