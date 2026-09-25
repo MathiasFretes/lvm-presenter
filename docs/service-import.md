@@ -18,5 +18,5 @@ The adapter accepts `schemaVersion: "0.1"` and requires local scripture text. It
 
 - `npm run test:lvm`: contract mapping and invalid input.
 - `npm run test:unit`: existing FreeShow unit suite.
-- `npm run build`: production Electron and frontend build.
+- `npm run build`: local production Electron and frontend build. CI compiles the frontend, server files, and Electron TypeScript separately; the inherited `postbuild` bundles native Opus files that are absent when installation scripts are disabled.
 - `npm run test:playwright -- --grep "offline Sunday service"`: local Windows check with native dependencies installed; launches Electron with isolated local data, imports the example file, opens a show, and sends a slide to the output preview. The CI job runs the contract, unit suite, and build with install scripts disabled because the inherited `grandiose` git dependency requires a native NDI toolchain on the hosted runner.

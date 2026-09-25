@@ -20,4 +20,7 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm run test:lvm
       - run: npm run test:unit
-      - run: npm run build
+      - run: npm run prebuild
+      - run: npm run build:frontend:prod
+      - run: npm run build:servers:prod
+      - run: npm run build:electron:prod
