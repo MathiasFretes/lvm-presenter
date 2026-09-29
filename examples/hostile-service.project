@@ -1,0 +1,649 @@
+{
+  "project": {
+    "id": "lvm-culto-hostil-2026-09-27",
+    "name": "Culto de prueba — ñ, á, 😀",
+    "created": 1790546400000,
+    "parent": "/",
+    "shows": [
+      {
+        "id": "lvm-culto-hostil-2026-09-27-song-1",
+        "name": "Señor, aquí estás 😀",
+        "type": "show"
+      },
+      {
+        "id": "lvm-culto-hostil-2026-09-27-scripture-1",
+        "name": "Salmo 23:1",
+        "type": "show"
+      },
+      {
+        "id": "lvm-culto-hostil-2026-09-27-scripture-2",
+        "name": "Salmo 23:2",
+        "type": "show"
+      },
+      {
+        "id": "lvm-culto-hostil-2026-09-27-announcement-1",
+        "name": "Reunión de jóvenes",
+        "type": "show"
+      },
+      {
+        "id": "lvm-culto-hostil-2026-09-27-sermon-1",
+        "name": "El buen pastor",
+        "type": "show"
+      }
+    ]
+  },
+  "parentFolder": "",
+  "shows": {
+    "lvm-culto-hostil-2026-09-27-song-1": {
+      "name": "Señor, aquí estás 😀",
+      "origin": "lvm",
+      "private": false,
+      "category": null,
+      "settings": {
+        "activeLayout": "lvm-default",
+        "template": null
+      },
+      "timestamps": {
+        "created": 1790546400000,
+        "modified": null,
+        "used": null
+      },
+      "meta": {
+        "title": "Señor, aquí estás 😀",
+        "key": "D"
+      },
+      "slides": {
+        "song-1-1": {
+          "group": "Verso 1",
+          "color": null,
+          "settings": {},
+          "notes": "",
+          "items": [
+            {
+              "style": "top:88px;left:50px;height:904px;width:1820px;",
+              "lines": [
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Señor, tú 😀 estás aquí",
+                      "style": ""
+                    }
+                  ],
+                  "chords": [
+                    {
+                      "id": "song-1-1-0-0",
+                      "pos": 0,
+                      "key": "D"
+                    },
+                    {
+                      "id": "song-1-1-0-1",
+                      "pos": 2,
+                      "key": "G"
+                    },
+                    {
+                      "id": "song-1-1-0-2",
+                      "pos": 13,
+                      "key": "A"
+                    }
+                  ]
+                },
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Tu paz me sostiene",
+                      "style": ""
+                    }
+                  ],
+                  "chords": [
+                    {
+                      "id": "song-1-1-1-0",
+                      "pos": 0,
+                      "key": "D"
+                    },
+                    {
+                      "id": "song-1-1-1-1",
+                      "pos": 10,
+                      "key": "A"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "song-1-2": {
+          "group": "Coro",
+          "color": null,
+          "settings": {},
+          "notes": "",
+          "items": [
+            {
+              "style": "top:88px;left:50px;height:904px;width:1820px;",
+              "lines": [
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Cantaré con fe",
+                      "style": ""
+                    }
+                  ],
+                  "chords": [
+                    {
+                      "id": "song-1-2-0-0",
+                      "pos": 0,
+                      "key": "G"
+                    }
+                  ]
+                },
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Jesús, mi luz",
+                      "style": ""
+                    }
+                  ],
+                  "chords": [
+                    {
+                      "id": "song-1-2-1-0",
+                      "pos": 0,
+                      "key": "D"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "song-1-3": {
+          "group": "Verso 2",
+          "color": null,
+          "settings": {},
+          "notes": "",
+          "items": [
+            {
+              "style": "top:88px;left:50px;height:904px;width:1820px;",
+              "lines": [
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "En la noche seguiré",
+                      "style": ""
+                    }
+                  ],
+                  "chords": [
+                    {
+                      "id": "song-1-3-0-0",
+                      "pos": 0,
+                      "key": "D"
+                    },
+                    {
+                      "id": "song-1-3-0-1",
+                      "pos": 12,
+                      "key": "A"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "song-1-4": {
+          "group": "Coro",
+          "color": null,
+          "settings": {},
+          "notes": "",
+          "items": [
+            {
+              "style": "top:88px;left:50px;height:904px;width:1820px;",
+              "lines": [
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Cantaré con fe",
+                      "style": ""
+                    }
+                  ],
+                  "chords": [
+                    {
+                      "id": "song-1-4-0-0",
+                      "pos": 0,
+                      "key": "G"
+                    }
+                  ]
+                },
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Jesús, mi luz",
+                      "style": ""
+                    }
+                  ],
+                  "chords": [
+                    {
+                      "id": "song-1-4-1-0",
+                      "pos": 0,
+                      "key": "D"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "song-1-5": {
+          "group": "Puente",
+          "color": null,
+          "settings": {},
+          "notes": "",
+          "items": [
+            {
+              "style": "top:88px;left:50px;height:904px;width:1820px;",
+              "lines": [
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Aquí me quedaré",
+                      "style": ""
+                    }
+                  ],
+                  "chords": [
+                    {
+                      "id": "song-1-5-0-0",
+                      "pos": 0,
+                      "key": "Bm"
+                    },
+                    {
+                      "id": "song-1-5-0-1",
+                      "pos": 8,
+                      "key": "G"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "song-1-6": {
+          "group": "Coro",
+          "color": null,
+          "settings": {},
+          "notes": "",
+          "items": [
+            {
+              "style": "top:88px;left:50px;height:904px;width:1820px;",
+              "lines": [
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Cantaré con fe",
+                      "style": ""
+                    }
+                  ],
+                  "chords": [
+                    {
+                      "id": "song-1-6-0-0",
+                      "pos": 0,
+                      "key": "G"
+                    }
+                  ]
+                },
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Jesús, mi luz",
+                      "style": ""
+                    }
+                  ],
+                  "chords": [
+                    {
+                      "id": "song-1-6-1-0",
+                      "pos": 0,
+                      "key": "D"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "song-1-7": {
+          "group": "Coro",
+          "color": null,
+          "settings": {},
+          "notes": "",
+          "items": [
+            {
+              "style": "top:88px;left:50px;height:904px;width:1820px;",
+              "lines": [
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Cantaré con fe",
+                      "style": ""
+                    }
+                  ],
+                  "chords": [
+                    {
+                      "id": "song-1-7-0-0",
+                      "pos": 0,
+                      "key": "G"
+                    }
+                  ]
+                },
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Jesús, mi luz",
+                      "style": ""
+                    }
+                  ],
+                  "chords": [
+                    {
+                      "id": "song-1-7-1-0",
+                      "pos": 0,
+                      "key": "D"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "layouts": {
+        "lvm-default": {
+          "name": "Servicio",
+          "notes": "",
+          "slides": [
+            {
+              "id": "song-1-1"
+            },
+            {
+              "id": "song-1-2"
+            },
+            {
+              "id": "song-1-3"
+            },
+            {
+              "id": "song-1-4"
+            },
+            {
+              "id": "song-1-5"
+            },
+            {
+              "id": "song-1-6"
+            },
+            {
+              "id": "song-1-7"
+            }
+          ]
+        }
+      },
+      "media": {}
+    },
+    "lvm-culto-hostil-2026-09-27-scripture-1": {
+      "name": "Salmo 23:1",
+      "origin": "lvm",
+      "private": false,
+      "category": null,
+      "settings": {
+        "activeLayout": "lvm-default",
+        "template": null
+      },
+      "timestamps": {
+        "created": 1790546400000,
+        "modified": null,
+        "used": null
+      },
+      "meta": {
+        "title": "Salmo 23:1"
+      },
+      "slides": {
+        "scripture-1": {
+          "group": "scripture",
+          "color": null,
+          "settings": {},
+          "notes": "",
+          "items": [
+            {
+              "style": "top:88px;left:50px;height:904px;width:1820px;",
+              "lines": [
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "JEHOVÁ es mi pastor; nada me faltará.",
+                      "style": ""
+                    }
+                  ]
+                },
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Salmo 23:1 · RV1909",
+                      "style": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "layouts": {
+        "lvm-default": {
+          "name": "Servicio",
+          "notes": "",
+          "slides": [
+            {
+              "id": "scripture-1"
+            }
+          ]
+        }
+      },
+      "media": {}
+    },
+    "lvm-culto-hostil-2026-09-27-scripture-2": {
+      "name": "Salmo 23:2",
+      "origin": "lvm",
+      "private": false,
+      "category": null,
+      "settings": {
+        "activeLayout": "lvm-default",
+        "template": null
+      },
+      "timestamps": {
+        "created": 1790546400000,
+        "modified": null,
+        "used": null
+      },
+      "meta": {
+        "title": "Salmo 23:2"
+      },
+      "slides": {
+        "scripture-2": {
+          "group": "scripture",
+          "color": null,
+          "settings": {},
+          "notes": "",
+          "items": [
+            {
+              "style": "top:88px;left:50px;height:904px;width:1820px;",
+              "lines": [
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "En lugares de delicados pastos me hará yacer: junto á aguas de reposo me pastoreará.",
+                      "style": ""
+                    }
+                  ]
+                },
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Salmo 23:2 · RV1909",
+                      "style": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "layouts": {
+        "lvm-default": {
+          "name": "Servicio",
+          "notes": "",
+          "slides": [
+            {
+              "id": "scripture-2"
+            }
+          ]
+        }
+      },
+      "media": {}
+    },
+    "lvm-culto-hostil-2026-09-27-announcement-1": {
+      "name": "Reunión de jóvenes",
+      "origin": "lvm",
+      "private": false,
+      "category": null,
+      "settings": {
+        "activeLayout": "lvm-default",
+        "template": null
+      },
+      "timestamps": {
+        "created": 1790546400000,
+        "modified": null,
+        "used": null
+      },
+      "meta": {
+        "title": "Reunión de jóvenes"
+      },
+      "slides": {
+        "announcement-1": {
+          "group": "announcement",
+          "color": null,
+          "settings": {},
+          "notes": "",
+          "items": [
+            {
+              "style": "top:88px;left:50px;height:904px;width:1820px;",
+              "lines": [
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Reunión de jóvenes",
+                      "style": ""
+                    }
+                  ]
+                },
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Sábado a las 18:00, salón Ñandutí",
+                      "style": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "layouts": {
+        "lvm-default": {
+          "name": "Servicio",
+          "notes": "",
+          "slides": [
+            {
+              "id": "announcement-1"
+            }
+          ]
+        }
+      },
+      "media": {}
+    },
+    "lvm-culto-hostil-2026-09-27-sermon-1": {
+      "name": "El buen pastor",
+      "origin": "lvm",
+      "private": false,
+      "category": null,
+      "settings": {
+        "activeLayout": "lvm-default",
+        "template": null
+      },
+      "timestamps": {
+        "created": 1790546400000,
+        "modified": null,
+        "used": null
+      },
+      "meta": {
+        "title": "El buen pastor"
+      },
+      "slides": {
+        "sermon-1": {
+          "group": "sermon",
+          "color": null,
+          "settings": {},
+          "notes": "",
+          "items": [
+            {
+              "style": "top:88px;left:50px;height:904px;width:1820px;",
+              "lines": [
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "El buen pastor",
+                      "style": ""
+                    }
+                  ]
+                },
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Lectura: Salmo 23:1–2",
+                      "style": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "layouts": {
+        "lvm-default": {
+          "name": "Servicio",
+          "notes": "",
+          "slides": [
+            {
+              "id": "sermon-1"
+            }
+          ]
+        }
+      },
+      "media": {}
+    }
+  }
+}

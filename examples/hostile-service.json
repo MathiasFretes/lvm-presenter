@@ -1,0 +1,229 @@
+{
+  "schemaVersion": "0.1",
+  "id": "culto-hostil-2026-09-27",
+  "title": "Culto de prueba — ñ, á, 😀",
+  "startsAt": "2026-09-27T19:00:00-03:00",
+  "setlist": {
+    "id": "repertorio-hostil",
+    "name": "Repertorio de prueba"
+  },
+  "items": [
+    {
+      "id": "song-1",
+      "kind": "SONG",
+      "song": {
+        "id": "senor-aqui",
+        "title": "Señor, aquí estás 😀",
+        "key": "D",
+        "sections": [
+          {
+            "kind": "verse",
+            "label": "Verso 1",
+            "lines": [
+              {
+                "text": "Señor, tú 😀 estás aquí",
+                "chords": [
+                  {
+                    "symbol": "D",
+                    "index": 0
+                  },
+                  {
+                    "symbol": "G",
+                    "index": 2
+                  },
+                  {
+                    "symbol": "A",
+                    "index": 13
+                  }
+                ]
+              },
+              {
+                "text": "Tu paz me sostiene",
+                "chords": [
+                  {
+                    "symbol": "D",
+                    "index": 0
+                  },
+                  {
+                    "symbol": "A",
+                    "index": 10
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "chorus",
+            "label": "Coro",
+            "lines": [
+              {
+                "text": "Cantaré con fe",
+                "chords": [
+                  {
+                    "symbol": "G",
+                    "index": 0
+                  }
+                ]
+              },
+              {
+                "text": "Jesús, mi luz",
+                "chords": [
+                  {
+                    "symbol": "D",
+                    "index": 0
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "verse",
+            "label": "Verso 2",
+            "lines": [
+              {
+                "text": "En la noche seguiré",
+                "chords": [
+                  {
+                    "symbol": "D",
+                    "index": 0
+                  },
+                  {
+                    "symbol": "A",
+                    "index": 12
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "chorus",
+            "label": "Coro",
+            "lines": [
+              {
+                "text": "Cantaré con fe",
+                "chords": [
+                  {
+                    "symbol": "G",
+                    "index": 0
+                  }
+                ]
+              },
+              {
+                "text": "Jesús, mi luz",
+                "chords": [
+                  {
+                    "symbol": "D",
+                    "index": 0
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "bridge",
+            "label": "Puente",
+            "lines": [
+              {
+                "text": "Aquí me quedaré",
+                "chords": [
+                  {
+                    "symbol": "Bm",
+                    "index": 0
+                  },
+                  {
+                    "symbol": "G",
+                    "index": 8
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "chorus",
+            "label": "Coro",
+            "lines": [
+              {
+                "text": "Cantaré con fe",
+                "chords": [
+                  {
+                    "symbol": "G",
+                    "index": 0
+                  }
+                ]
+              },
+              {
+                "text": "Jesús, mi luz",
+                "chords": [
+                  {
+                    "symbol": "D",
+                    "index": 0
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "kind": "chorus",
+            "label": "Coro",
+            "lines": [
+              {
+                "text": "Cantaré con fe",
+                "chords": [
+                  {
+                    "symbol": "G",
+                    "index": 0
+                  }
+                ]
+              },
+              {
+                "text": "Jesús, mi luz",
+                "chords": [
+                  {
+                    "symbol": "D",
+                    "index": 0
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "scripture-1",
+      "kind": "SCRIPTURE",
+      "scripture": {
+        "reference": "Salmo 23:1",
+        "version": "RV1909",
+        "text": "JEHOVÁ es mi pastor; nada me faltará.",
+        "source": "https://ebible.org/details.php?id=spaRV1909"
+      }
+    },
+    {
+      "id": "scripture-2",
+      "kind": "SCRIPTURE",
+      "scripture": {
+        "reference": "Salmo 23:2",
+        "version": "RV1909",
+        "text": "En lugares de delicados pastos me hará yacer: junto á aguas de reposo me pastoreará.",
+        "source": "https://ebible.org/details.php?id=spaRV1909"
+      }
+    },
+    {
+      "id": "announcement-1",
+      "kind": "ANNOUNCEMENT",
+      "announcement": {
+        "title": "Reunión de jóvenes",
+        "body": "Sábado a las 18:00, salón Ñandutí"
+      }
+    },
+    {
+      "id": "sermon-1",
+      "kind": "SERMON",
+      "sermon": {
+        "title": "El buen pastor",
+        "body": "Lectura: Salmo 23:1–2"
+      }
+    }
+  ]
+}
