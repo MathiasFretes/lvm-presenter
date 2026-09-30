@@ -21,8 +21,19 @@ npm run ndi:verify
 
 Runtime loading also checks `NDI_RUNTIME_DIR_V6` and `NDI_RUNTIME_DIR_V5`. The runtime DLL must be named `Processing.NDI.Lib.x64.dll`. The extracted SDK contains `NDI SDK License Agreement.pdf`. Review those terms before product packaging or redistribution; the [current developer page](https://ndi.video/for-developers/) describes permitted software uses.
 
-The API accepts BGRA or RGBA 8-bit non-premultiplied frames with an even width, 30 or 60 fps. `send()` copies the frame and calls the synchronous NDI sender function. `ndi:verify` checks native loading and sends one small frame into the SDK; it does not verify that a receiver displays it. Capture and Electron output wiring are separate integration steps. No network E2E has been run yet.
+The API accepts BGRA or RGBA 8-bit non-premultiplied frames with an even width, 30 or 60 fps. `send()` uses a reusable native buffer and calls the synchronous NDI sender function. `ndi:verify` checks native loading and sends one small frame into the SDK; it does not verify that a receiver displays it. Capture and Electron output wiring are separate integration steps.
+
+## Video E2E
+
+After `ndi:build`, start an NDI receiver on the same machine or LAN. From this package directory, run:
+
+```powershell
+node scripts/e2e-sender.mjs --fps 30 --seconds 600
+node scripts/e2e-sender.mjs --fps 60 --seconds 600
+```
+
+Select `LAPTOP-NAME (LVM Presenter Test)` in the receiver. The pattern contains color bars, a frame counter, and a moving block; check that the colors and orientation are correct and the counter advances. The script reuses its frame buffer and emits a JSON report in ignored `.ndi-cache/reports/` with send timing, effective FPS, errors, skipped intervals, CPU time, and memory samples. Keep the receiver attached throughout each run. Its visual output is a manual E2E gate; the JSON report cannot prove that an image appeared. Run 60 fps only after the receiver displays the 30 fps stream. No part of this test connects the sender to Presenter Output Manager.
 
 ## Acceptance gate
 
-Build the addon against the official SDK, start `LVM Presenter - Congregación`, send 1920×1080 frames for several minutes, and verify picture and stability in an NDI receiver. Test runtime-missing and sender-stop behavior. This requires the SDK/runtime and an NDI receiver on the target system.
+Build the addon against the official SDK, run the independent 1920×1080 sender for 10 minutes at 30 fps and then 60 fps, and verify picture and stability in an NDI receiver. Test runtime-missing and sender-stop behavior. This requires the SDK/runtime and an NDI receiver on the target system. See [the M7.8C test record](docs/video-e2e.md) for observed results and limitations.

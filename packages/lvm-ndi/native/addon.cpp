@@ -1,6 +1,7 @@
 #include <node_api.h>
 #include <windows.h>
 #include <Processing.NDI.Lib.h>
+#include <algorithm>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -17,6 +18,7 @@ struct Sender {
     int height = 0;
     int fps = 0;
     NDIlib_FourCC_video_type_e format = NDIlib_FourCC_type_BGRA;
+    std::vector<uint8_t> pixels;
 };
 
 napi_value fail(napi_env env, const char* message) {
@@ -142,7 +144,8 @@ napi_value send(napi_env env, napi_callback_info info) {
         return fail(env, "Invalid NDI video buffer or stride");
     // A private copy keeps the SDK's synchronous send independent of JS buffer ownership.
     const size_t needed = static_cast<size_t>(stride) * (sender->height - 1) + sender->width * 4;
-    std::vector<uint8_t> pixels(static_cast<uint8_t*>(data), static_cast<uint8_t*>(data) + needed);
+    sender->pixels.resize(needed);
+    std::copy_n(static_cast<uint8_t*>(data), needed, sender->pixels.data());
     NDIlib_video_frame_v2_t frame{};
     frame.xres = sender->width;
     frame.yres = sender->height;
@@ -152,7 +155,7 @@ napi_value send(napi_env env, napi_callback_info info) {
     frame.picture_aspect_ratio = static_cast<float>(sender->width) / sender->height;
     frame.frame_format_type = NDIlib_frame_format_type_progressive;
     frame.timecode = NDIlib_send_timecode_synthesize;
-    frame.p_data = pixels.data();
+    frame.p_data = sender->pixels.data();
     frame.line_stride_in_bytes = stride;
     api->NDIlib_send_send_video_v2(sender->instance, &frame);
     napi_value result;

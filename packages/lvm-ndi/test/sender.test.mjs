@@ -41,3 +41,21 @@ test('sender creation failure is distinct from missing runtime', async () => {
   await assert.rejects(sender.start(config), /creation failed/)
   assert.equal(sender.getStatus(), 'error')
 })
+
+test('a stopped sender rejects frames and can be started again', async () => {
+  let created = 0
+  let destroyed = 0
+  const sender = new NdiSender({
+    create: () => { created++; return {} },
+    send: () => {},
+    destroy: () => { destroyed++ }
+  })
+  await sender.start(config)
+  await assert.rejects(sender.start(config), /already active/)
+  await sender.stop()
+  assert.throws(() => sender.send({}), /not active/)
+  await sender.start(config)
+  await sender.stop()
+  assert.equal(created, 2)
+  assert.equal(destroyed, 2)
+})

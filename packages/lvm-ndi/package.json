@@ -9,7 +9,8 @@
     "test": "node --test test/*.test.mjs",
     "ndi:setup": "node scripts/setup-ndi.mjs",
     "ndi:build": "node scripts/build-ndi.mjs",
-    "ndi:verify": "node scripts/verify-native.mjs"
+    "ndi:verify": "node scripts/verify-native.mjs",
+    "ndi:e2e": "node scripts/e2e-sender.mjs"
   },
   "devDependencies": {
     "node-gyp": "11.5.0"
