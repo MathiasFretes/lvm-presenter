@@ -357,6 +357,16 @@ export function setGlobalMenu(strings: Dictionary = {}) {
 
 // ----- GLOBAL LISTENERS -----
 
+let closingOutputsBeforeQuit = false
+app.on("before-quit", (event) => {
+    if (closingOutputsBeforeQuit || OutputHelper.getKeys().length === 0) return
+    event.preventDefault()
+    closingOutputsBeforeQuit = true
+    void OutputHelper.Lifecycle.closeAllOutputs()
+        .catch((error) => console.error("Output cleanup before quit failed:", error))
+        .finally(() => app.quit())
+})
+
 // quit app when all windows have been closed
 app.on("window-all-closed", () => {
     cleanupBeforeQuit()

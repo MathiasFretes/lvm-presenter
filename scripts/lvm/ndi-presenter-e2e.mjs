@@ -1,6 +1,6 @@
 import { _electron as electron } from 'playwright'
 import { existsSync, writeFileSync } from 'node:fs'
-import { mkdir, readFile, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { performance } from 'node:perf_hooks'
@@ -43,13 +43,14 @@ const outputId = 'lvm-ndi-integrated-e2e'
 const stamp = new Date().toISOString().replaceAll(':', '-')
 const runDir = path.join(cache, 'integrated-runs', `${mode}-${fps}-${outputMode}-${stamp}`)
 await mkdir(runDir, { recursive: true })
+const profileDir = path.join(runDir, 'profile')
 
 const app = await electron.launch({
   timeout: 90000,
   executablePath: electronExe,
   args: ['.'], cwd: root,
-  env: { ...process.env, NODE_ENV: 'production', FS_MOCK_STORE_PATH: runDir,
-    APPDATA: path.join(runDir, 'Roaming'), LOCALAPPDATA: path.join(runDir, 'Local'),
+  env: { ...process.env, NODE_ENV: 'production', FS_MOCK_STORE_PATH: profileDir,
+    APPDATA: path.join(profileDir, 'Roaming'), LOCALAPPDATA: path.join(profileDir, 'Local'),
     LVM_NDI_OUTPUT_ID: mode === 'on' ? outputId : '', LVM_NDI_FPS: String(fps),
     LVM_NDI_SOURCE_NAME: 'LVM Presenter', LVM_NDI_RUNTIME_DIR: runtimeDir,
     LVM_E2E_OUTPUT_MODE: outputMode }
@@ -161,6 +162,9 @@ try {
     try { execFileSync('taskkill.exe', ['/PID', String(electronPid), '/T', '/F'], { stdio: 'ignore' }) }
     catch { /* The process may already have exited normally. */ }
   }
+  // Keep measurements, but never leave the test's user profile behind.
+  if (path.resolve(profileDir).startsWith(path.resolve(runDir) + path.sep))
+    await rm(profileDir, { recursive: true, force: true })
   const result = { startedAt, mode, fps, outputMode, requestedSeconds: seconds, electronPid, launcherPid: child?.pid, failure, closeState, samples }
   await writeFile(path.join(runDir, 'report.json'), JSON.stringify(result, null, 2))
   console.log('Report:', path.join(runDir, 'report.json'))

@@ -912,7 +912,12 @@ export class OutputLifecycle {
     }
 
     static setWindowListeners(window: BrowserWindow, { id, name }: { [key: string]: string }) {
-        window.on("closed", () => { void LvmNdiBridge.disable(id) })
+        // A user can close the output window directly, without a REMOVE IPC.
+        // Run the same cleanup as an explicit removal so capture subscriptions,
+        // timers, the sender, and the output registry cannot survive the window.
+        window.on("closed", () => {
+            void this.removeOutput(id).catch((error) => console.error(`Output cleanup failed for ${id}:`, error))
+        })
         window.on("ready-to-show", () => {
             // focus back on main window if output window is not on top
             const mainWindow = getMainWindow()

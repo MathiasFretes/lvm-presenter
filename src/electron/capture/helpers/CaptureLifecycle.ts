@@ -281,19 +281,9 @@ export class CaptureLifecycle {
         console.info("Capture - stopping: " + id)
 
         OutputHelper.Lifecycle.releaseOsrCaptureTextures(id)
-        if (!(output as any).follower) this.cleanupListeners(capture.window)
         delete output.captureOptions
         this.updateWebRtcHostState()
         this.updateRtmpState()
-    }
-
-    private static cleanupListeners(window: any) {
-        if (!window || window.isDestroyed()) return
-
-        window.removeAllListeners()
-        if (window.webContents && !window.webContents.isDestroyed?.()) {
-            window.webContents.removeAllListeners()
-        }
     }
 
     private static updateWebRtcHostState() {
