@@ -8,7 +8,7 @@
 
 namespace {
 
-const NDIlib_v5* api = nullptr;
+const NDIlib_v6_3* api = nullptr;
 HMODULE library = nullptr;
 int active_senders = 0;
 
@@ -57,8 +57,8 @@ bool load_runtime() {
         if (library) break;
     }
     if (!library) return false;
-    using load_function = const NDIlib_v5* (*)();
-    auto load = reinterpret_cast<load_function>(GetProcAddress(library, "NDIlib_v5_load"));
+    using load_function = const NDIlib_v6_3* (*)();
+    auto load = reinterpret_cast<load_function>(GetProcAddress(library, "NDIlib_v6_3_load"));
     if (load) api = load();
     if (api) return true;
     FreeLibrary(library);
@@ -68,9 +68,9 @@ bool load_runtime() {
 
 void close_sender(Sender* sender) {
     if (!sender || !sender->instance) return;
-    api->NDIlib_send_destroy(sender->instance);
+    api->send_destroy(sender->instance);
     sender->instance = nullptr;
-    if (--active_senders == 0) api->NDIlib_destroy();
+    if (--active_senders == 0) api->destroy();
 }
 
 void finalize_sender(napi_env, void* data, void*) {
@@ -100,15 +100,15 @@ napi_value create(napi_env env, napi_callback_info info) {
         height < 1 || height > 4320 || (fps != 30 && fps != 60) ||
         (format != "BGRA" && format != "RGBA")) return fail(env, "Invalid NDI sender config");
     if (!load_runtime()) return fail(env, "NDI runtime not found; set LVM_NDI_RUNTIME_DIR to its DLL directory");
-    if (active_senders == 0 && !api->NDIlib_initialize()) return fail(env, "NDI runtime initialization failed");
+    if (active_senders == 0 && !api->initialize()) return fail(env, "NDI runtime initialization failed");
 
     NDIlib_send_create_t options{};
     options.p_ndi_name = name.c_str();
     options.clock_video = false;
     options.clock_audio = false;
-    auto instance = api->NDIlib_send_create(&options);
+    auto instance = api->send_create(&options);
     if (!instance) {
-        if (active_senders == 0) api->NDIlib_destroy();
+        if (active_senders == 0) api->destroy();
         return fail(env, "NDI sender creation failed");
     }
     auto* sender = new Sender{};
@@ -157,7 +157,7 @@ napi_value send(napi_env env, napi_callback_info info) {
     frame.timecode = NDIlib_send_timecode_synthesize;
     frame.p_data = sender->pixels.data();
     frame.line_stride_in_bytes = stride;
-    api->NDIlib_send_send_video_v2(sender->instance, &frame);
+    api->send_send_video_v2(sender->instance, &frame);
     napi_value result;
     napi_get_undefined(env, &result);
     return result;

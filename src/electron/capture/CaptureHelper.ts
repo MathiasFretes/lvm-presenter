@@ -25,6 +25,7 @@ export class CaptureHelper {
         const screen: Display = this.getWindowScreen(window)
 
         const defaultFramerates = {
+            lvmNdi: process.env.LVM_NDI_FPS === "60" ? 60 : 30,
             ndi: this.framerates.connected,
             omt: this.framerates.connected,
             blackmagic: this.framerates.unconnected,
@@ -38,7 +39,7 @@ export class CaptureHelper {
             window,
             frameSubscription: null,
             displayFrequency: screen.displayFrequency || 60,
-            options: { ndi: false, omt: false, blackmagic: false, server: false, stage: false, webrtc: false, rtmp: false },
+            options: { lvmNdi: false, ndi: false, omt: false, blackmagic: false, server: false, stage: false, webrtc: false, rtmp: false },
             framerates: defaultFramerates,
             id
         }
@@ -50,6 +51,7 @@ export class CaptureHelper {
 
     static getMaxActiveFramerate(framerates: { [key: string]: number }, activeOptions: { [key: string]: boolean }): number {
         const activeRates: number[] = []
+        if (activeOptions.lvmNdi) activeRates.push(framerates.lvmNdi || 30)
         if (activeOptions.ndi) activeRates.push(framerates.ndi || 1)
         if (activeOptions.omt) activeRates.push(framerates.omt || 1)
         if (activeOptions.blackmagic) activeRates.push(framerates.blackmagic || 1)

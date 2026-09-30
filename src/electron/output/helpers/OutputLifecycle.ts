@@ -14,6 +14,7 @@ import { setDataOMT } from "../../omt/talk"
 import { wait } from "../../utils/helpers"
 import { outputOptions } from "../../utils/windowOptions"
 import { OutputHelper } from "../OutputHelper"
+import { LvmNdiBridge } from "../LvmNdiBridge"
 import { setOutputAlwaysOnTop } from "./OutputAlwaysOnTop"
 import { OutputVisibility } from "./OutputVisibility"
 
@@ -107,6 +108,7 @@ export class OutputLifecycle {
         // const previewWindow = this.createPreviewWindow({ ...output.bounds, backgroundColor: "#000000" })
 
         OutputHelper.setOutput(id, { window: outputWindow, osr: this.isInvisible(output), invisible: output.invisible, boundsLocked: output.boundsLocked, screen: output.screen, intendedBounds: resolvedBounds, transparent: output.transparent, webrtcData: output.webrtcData, rtmpData: output.rtmpData })
+        LvmNdiBridge.enable(id)
         // OutputHelper.setOutput(id, { window: outputWindow, previewWindow: previewWindow })
         OutputHelper.Bounds.updateBounds({ id: output.id!, bounds: resolvedBounds })
         this.updateWindowConstraints(id)
@@ -117,7 +119,7 @@ export class OutputLifecycle {
             delete this.pendingCaptureStart[id]
 
             if (!CaptureHelper.Lifecycle || !OutputHelper.getOutput(id)) return // window closed before timeout finished
-            CaptureHelper.Lifecycle.startCapture(id, { ndi: output.ndi || false, omt: output.omt || false, blackmagic: !!output.blackmagic, webrtc: !!output.webrtcData?.streaming, rtmp: !!output.rtmpData?.streaming })
+            CaptureHelper.Lifecycle.startCapture(id, { lvmNdi: LvmNdiBridge.selected(id), ndi: output.ndi || false, omt: output.omt || false, blackmagic: !!output.blackmagic, webrtc: !!output.webrtcData?.streaming, rtmp: !!output.rtmpData?.streaming })
         }, 1200)
 
         // NDI
@@ -744,7 +746,7 @@ export class OutputLifecycle {
             const offMainIds = NdiSender.NDI[id]?.sender || OmtSender.OMT[id]?.sender ? [id] : []
             const groupInfo = offMainIds.length ? CaptureHelper.Transmitter.groupOffMainInfo(offMainIds) : null
             const hasGpuDownscale = typeof addon.readbackConsume === "function"
-            const canOffMain = !!groupInfo && groupInfo.eligible && (!groupInfo.needsScaled || hasGpuDownscale)
+            const canOffMain = !LvmNdiBridge.selected(id) && !!groupInfo && groupInfo.eligible && (!groupInfo.needsScaled || hasGpuDownscale)
             if (canOffMain) {
                 OutputLifecycle.noteFrameSize(id, width * height)
                 if (pendingFrame) {
@@ -830,12 +832,22 @@ export class OutputLifecycle {
     // content-change rate (static content still holds a constant rate on the wire)
     private static startOsrSendTimer(window: BrowserWindow, id: string, emit: () => void) {
         let sendTimer: NodeJS.Timeout
+        // A synchronous NDI send can occupy most of a frame interval. Keep LVM's
+        // cadence relative to the previous deadline, rather than adding the
+        // send duration to every interval.
+        let nextLvmDeadline = performance.now() + this.getOsrSendInterval(id)
         const tick = () => {
             // transmitFrame no-ops until the output's capture channels are set up, and throttles each consumer
             if (!window.isDestroyed()) emit()
             // re-read the interval each tick so framerate changes (e.g. NDI connect) take effect
             const interval = this.getOsrSendInterval(id)
-            sendTimer = setTimeout(tick, interval)
+            if (LvmNdiBridge.selected(id)) {
+                nextLvmDeadline += interval
+                if (nextLvmDeadline < performance.now()) nextLvmDeadline = performance.now() + interval
+                sendTimer = setTimeout(tick, Math.max(1, nextLvmDeadline - performance.now()))
+            } else {
+                sendTimer = setTimeout(tick, interval)
+            }
         }
         sendTimer = setTimeout(tick, this.getOsrSendInterval(id))
         window.on("closed", () => clearTimeout(sendTimer))
@@ -846,7 +858,8 @@ export class OutputLifecycle {
         // no capture configured yet: tick fast; transmitFrame no-ops until channels exist
         if (!captureOptions) return 1000 / 60
         const fps = CaptureHelper.getMaxActiveFramerate(captureOptions.framerates || {}, captureOptions.options || {})
-        return Math.max(1, Math.round(1000 / Math.max(1, fps)))
+        const interval = 1000 / Math.max(1, fps)
+        return LvmNdiBridge.selected(id) ? interval : Math.max(1, Math.round(interval))
     }
 
     // admission target interval: 1000 / max configured consumer framerate across the shared-render
@@ -859,6 +872,7 @@ export class OutputLifecycle {
         this.clearPendingCaptureStart(id)
 
         CaptureHelper.Lifecycle.stopCapture(id)
+        await LvmNdiBridge.disable(id)
         NdiSender.stopSenderNDI(id)
         OmtSender.stopSenderOMT(id)
         BlackmagicSender.stop(id)
@@ -898,6 +912,7 @@ export class OutputLifecycle {
     }
 
     static setWindowListeners(window: BrowserWindow, { id, name }: { [key: string]: string }) {
+        window.on("closed", () => { void LvmNdiBridge.disable(id) })
         window.on("ready-to-show", () => {
             // focus back on main window if output window is not on top
             const mainWindow = getMainWindow()

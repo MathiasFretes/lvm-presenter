@@ -37,3 +37,7 @@ Select `LAPTOP-NAME (LVM Presenter Test)` in the receiver. The pattern contains 
 ## Acceptance gate
 
 Build the addon against the official SDK, run the independent 1920×1080 sender for 10 minutes at 30 fps and then 60 fps, and verify picture and stability in an NDI receiver. Test runtime-missing and sender-stop behavior. This requires the SDK/runtime and an NDI receiver on the target system. See [the M7.8C test record](docs/video-e2e.md) for observed results and limitations.
+
+## Presenter integration
+
+The isolated M7.8D development integration and its E2E procedure are documented in [Presenter integration](docs/presenter-integration.md). The development flag selects one real Presenter output. This is not yet a product setting or a release of NDI output in Presenter.

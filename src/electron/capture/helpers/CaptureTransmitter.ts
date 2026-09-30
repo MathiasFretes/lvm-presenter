@@ -6,6 +6,7 @@ import { NdiSender } from "../../ndi/NdiSender"
 import util from "../../ndi/vingester-util"
 import { OmtSender } from "../../omt/OmtSender"
 import { OutputHelper } from "../../output/OutputHelper"
+import { LvmNdiBridge } from "../../output/LvmNdiBridge"
 import { getConnections, getStageStreamSubscriberIds, toServer, toStageStreamSubscribers } from "../../servers"
 import { RtmpStreamer } from "../../streaming/RtmpStreamer"
 import { WebRtcHost } from "../../streaming/WebRtcHost"
@@ -53,7 +54,7 @@ export class CaptureTransmitter {
         const captureOptions = OutputHelper.getOutput(captureId)?.captureOptions
         if (!captureOptions) return
 
-        const channelKeys = ["ndi", "omt", "blackmagic", "server", "stage", "webrtc", "rtmp"]
+        const channelKeys = ["lvmNdi", "ndi", "omt", "blackmagic", "server", "stage", "webrtc", "rtmp"]
         channelKeys.forEach((key) => {
             if (captureOptions.options[key]) this.startChannel(captureId, key)
         })
@@ -87,6 +88,7 @@ export class CaptureTransmitter {
         const keys = Object.keys(this.channels)
             .filter((k) => k.startsWith(`${captureId}-`))
             .map((k) => this.channels[k].key)
+        if (keys.includes("lvmNdi")) return 0 // LVM NDI consumes the final BGRA frame.
         if (keys.length !== 1) return 0
         const only = keys[0]
         if (only === "ndi") {
@@ -104,7 +106,7 @@ export class CaptureTransmitter {
         const heavy = Object.keys(this.channels)
             .filter((k) => k.startsWith(`${captureId}-`))
             .map((k) => this.channels[k].key)
-            .filter((key) => key !== "ndi" && key !== "omt")
+            .filter((key) => key !== "lvmNdi" && key !== "ndi" && key !== "omt")
         if (heavy.some((key) => key !== "server" && key !== "stage")) return null
         return heavy
     }
@@ -123,7 +125,7 @@ export class CaptureTransmitter {
             const heavy = Object.keys(this.channels)
                 .filter((k) => k.startsWith(`${id}-`))
                 .map((k) => this.channels[k].key)
-                .filter((key) => key !== "ndi" && key !== "omt")
+                .filter((key) => key !== "lvmNdi" && key !== "ndi" && key !== "omt")
             if (heavy.some((key) => key !== "server" && key !== "stage")) return { eligible: false, needsScaled: false }
             if (heavy.length) needsScaled = true
         }
@@ -258,7 +260,7 @@ export class CaptureTransmitter {
 
     // buffer-consumers need only raw BGRA bytes (no NativeImage resize/toJPEG), so on the shared-texture
     // path they can take the readback buffer directly instead of a createFromBitmap -> toBitmap round-trip.
-    private static readonly BUFFER_CONSUMERS = new Set(["ndi", "omt", "webrtc", "rtmp", "blackmagic"])
+    private static readonly BUFFER_CONSUMERS = new Set(["lvmNdi", "ndi", "omt", "webrtc", "rtmp", "blackmagic"])
 
     private static osrModule: any = null
     private static loadOsr(): any {
@@ -345,6 +347,9 @@ export class CaptureTransmitter {
     // buffer, so any consumer that mutates (convertToRGBA) or transfers (NDI worker) it must copy first.
     private static sendRawToChannel(captureId: string, key: string, buffer: Buffer, size: Size, format: number) {
         switch (key) {
+            case "lvmNdi":
+                if (format === 0) LvmNdiBridge.push(captureId, { data: buffer, width: size.width, height: size.height, stride: size.width * 4 })
+                break
             case "ndi":
                 this.sendRawToNdi(captureId, buffer, size, format)
                 break
@@ -440,6 +445,11 @@ export class CaptureTransmitter {
         if (!size.width || !size.height) return
 
         switch (key) {
+            case "lvmNdi": {
+                const buffer = image.toBitmap()
+                LvmNdiBridge.push(captureId, { data: buffer, width: size.width, height: size.height, stride: size.width * 4 })
+                break
+            }
             case "ndi": {
                 const fitted = this.toConfiguredSize(captureId, image)
                 this.sendBufferToNdi(captureId, fitted.image, { size: fitted.size })

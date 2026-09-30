@@ -93,6 +93,7 @@ export class CaptureLifecycle {
         console.info("Capture - starting: " + id)
 
         const captureFrame = async () => {
+            const captureStartedAt = performance.now()
             const captureOpts = output.captureOptions
 
             if (!this.shouldContinueCapture(id, token, captureOpts)) {
@@ -121,7 +122,12 @@ export class CaptureLifecycle {
             }
 
             const delay = this.calculateFrameDelay(id, captureOpts)
-            captureOpts.frameSubscription = setTimeout(captureFrame, delay)
+            // capturePage and synchronous LVM NDI send both consume part of the
+            // requested interval. Preserve the existing behavior for other channels.
+            const nextDelay = captureOpts.options?.lvmNdi
+                ? Math.max(this.MIN_DELAY_MS, delay - (performance.now() - captureStartedAt))
+                : delay
+            captureOpts.frameSubscription = setTimeout(captureFrame, nextDelay)
         }
 
         captureFrame()
@@ -194,7 +200,7 @@ export class CaptureLifecycle {
         // static content - capture at a low rate until a change is detected
         // (Blackmagic and NDI frames bypass change detection / idle backoff to maintain video stream clocks)
         const timeSinceChange = CaptureTransmitter.getTimeSinceLastChange(id)
-        if (!options.blackmagic && !options.ndi && timeSinceChange > this.IDLE_AFTER_MS) {
+        if (!options.blackmagic && !options.ndi && !options.lvmNdi && timeSinceChange > this.IDLE_AFTER_MS) {
             return Math.min(baseCaptureFrameRate, this.IDLE_FPS)
         }
 
@@ -214,7 +220,7 @@ export class CaptureLifecycle {
             capture.frameSubscription = null
         }
 
-        const channels = ["ndi", "omt", "blackmagic", "server", "stage", "webrtc", "rtmp"]
+        const channels = ["lvmNdi", "ndi", "omt", "blackmagic", "server", "stage", "webrtc", "rtmp"]
         channels.forEach((channel) => CaptureHelper.Transmitter.stopChannel(id, channel))
 
         console.info("Capture - stopping: " + id)
