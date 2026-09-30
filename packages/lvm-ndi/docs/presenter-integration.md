@@ -4,7 +4,7 @@ The LVM sender now consumes the final BGRA frame of an existing Presenter output
 
 ```text
 Presentation Engine → Output.svelte → OutputLifecycle
-                                      ├─ visible window / capturePage
+                                      ├─ visible window / frame subscription
                                       └─ offscreen window / OSR paint
                                                  ↓
                                         CaptureTransmitter
@@ -31,7 +31,7 @@ node scripts/lvm/ndi-presenter-e2e.mjs --mode on --fps 30 --seconds 600 --output
 node scripts/lvm/ndi-presenter-e2e.mjs --mode on --fps 60 --seconds 600 --output osr
 ```
 
-Select the `LVM Presenter` source in Studio Monitor before the two ON runs. Verify that the text counter advances; script metrics alone cannot establish receiver visibility. Reports and any screenshots are saved under ignored `packages/lvm-ndi/.ndi-cache/integrated-runs/`. The script temporarily points `public/index.html` to the compiled frontend bundle and restores its original bytes on normal completion. `--output display` exercises the visible window and its `capturePage` path; `osr` exercises the offscreen output path. The script records per-process CPU/working set, main-process RSS, send timing, sender FPS, renderer `requestAnimationFrame` intervals, and UI evaluation latency. The latter is an interaction probe, not an exact paint-time measurement.
+Select the `LVM Presenter` source in Studio Monitor before the two ON runs. Verify that the text counter advances; script metrics alone cannot establish receiver visibility. Reports and any screenshots are saved under ignored `packages/lvm-ndi/.ndi-cache/integrated-runs/`. The script temporarily points `public/index.html` to the compiled frontend bundle and restores its original bytes on normal completion. `--output display` exercises the visible window and its frame subscription; `osr` exercises the offscreen output path. The script records per-process CPU/working set, main-process RSS, send timing, sender FPS, renderer `requestAnimationFrame` intervals, and UI evaluation latency. The latter is an interaction probe, not an exact paint-time measurement.
 
 ## NDI SDK 6.3 deprecations
 
@@ -47,11 +47,14 @@ Presenter rendered an updating text slide at 1920×1080. Studio Monitor displaye
 | NDI on, OSR, 30 target | 603 s | 17,684 | 29.11 | 14.54 / 99.19 ms | 286–313 MiB | 11.7 ms |
 | NDI off, OSR, 60 target | 60 s | 0 | — | — | 286–288 MiB | 4.7 ms |
 | NDI on, OSR, 60 target | 605 s | 35,627 | 58.42 | 14.46 / 101.94 ms | 285–315 MiB | 24.6 ms |
-| NDI on, visible window, 30 target | 61 s | 1,109 | 16.91 | 12.38 / 20.43 ms | 193–252 MiB | 26.4 ms |
+| NDI on, visible window, 30 target | 602 s | 17,715 | 29.18 | 5.53 / 63.33 ms | 199–270 MiB | 9.3 ms |
+| NDI on, visible window, 60 target | 60 s | 3,739 | 57.13 | 6.11 / 47.07 ms | 246–282 MiB | 12.4 ms |
 
 The main Electron process averaged 7.9% CPU in the OSR 30 run and 13.9% in the OSR 60 run, compared with 1.3% and 1.6% in the shorter NDI-off references. These percentages are reported by Electron's `app.getAppMetrics()` on this Windows machine. Renderer `requestAnimationFrame` intervals stayed near 16.7 ms in all OSR runs; they measure frame cadence, not GPU paint duration. No sender error or crash occurred; after removing the output, the sender reported `inactive`. RSS fluctuated after warmup without a sustained upward trend. The off references are shorter than the ten-minute ON runs, so their memory bands are not equivalent leak tests.
 
-**Remaining blocker:** attaching NDI to a *visible* Presenter window takes the existing `capturePage` route. A one-minute test produced only 16.91 fps at a 30 fps target, even after compensating the capture timer for elapsed work. The OSR output meets a practical near-30/near-60 stream, but the visible-window path does not meet the integrated 1080p30 gate. The current evidence does not justify declaring all of M7.8D complete or replacing the old output path. A follow-up should measure `capturePage` latency and find a way to share the same final frame with the physical display without a second render. Do not infer that sender async would solve this capture bottleneck.
+The initial visible-window `capturePage` path reached only 16.91 fps at a 30 fps target. The LVM-only consumer now uses Electron's `beginFrameSubscription(false, callback)` to receive full presentation frames from that same visible window, then reuses the latest frame at the configured send cadence. The local display remains visible, and Studio Monitor showed the same changing slide. This yielded 29.18 fps for ten minutes at 1080p30. If another capture consumer is enabled, Presenter leaves the exclusive subscription and returns to its shared capture path.
+
+**Remaining gate:** the visible-window 1080p60 run was stopped after a one-minute check at the user's request to end testing. It reached 57.13 fps without an error, but there is no ten-minute visible-window 60 fps result. The ten-minute OSR 60 fps result does not substitute for that physical-display measurement. M7.8D remains a review candidate, not a release gate passed. Studio Monitor was closed after testing; it is an external receiver used only to verify the NDI image, not a Presenter product window. No sender async or double buffering was introduced.
 
 ## Scope and gate
 
