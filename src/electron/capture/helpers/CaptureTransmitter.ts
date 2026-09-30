@@ -2,8 +2,6 @@ import { nativeImage, type NativeImage, type Size } from "electron"
 import os from "os"
 import { OUTPUT_STREAM } from "../../../types/Channels"
 import { BlackmagicSender } from "../../blackmagic/BlackmagicSender"
-import { NdiSender } from "../../ndi/NdiSender"
-import util from "../../ndi/vingester-util"
 import { OmtSender } from "../../omt/OmtSender"
 import { OutputHelper } from "../../output/OutputHelper"
 import { LvmNdiBridge } from "../../output/LvmNdiBridge"
@@ -54,7 +52,7 @@ export class CaptureTransmitter {
         const captureOptions = OutputHelper.getOutput(captureId)?.captureOptions
         if (!captureOptions) return
 
-        const channelKeys = ["lvmNdi", "ndi", "omt", "blackmagic", "server", "stage", "webrtc", "rtmp"]
+        const channelKeys = ["lvmNdi", "omt", "blackmagic", "server", "stage", "webrtc", "rtmp"]
         channelKeys.forEach((key) => {
             if (captureOptions.options[key]) this.startChannel(captureId, key)
         })
@@ -91,10 +89,6 @@ export class CaptureTransmitter {
         if (keys.includes("lvmNdi")) return 0 // LVM NDI consumes the final BGRA frame.
         if (keys.length !== 1) return 0
         const only = keys[0]
-        if (only === "ndi") {
-            const transparent = OutputHelper.getOutput(captureId)?.transparent === true
-            return transparent ? 2 : 1
-        }
         if (only === "omt") return OutputHelper.getOutput(captureId)?.transparent === true ? 2 : 1
         if (only === "blackmagic" && size && BlackmagicSender.canAcceptRawUyvy(captureId, size)) return 1
         if (only === "webrtc") return 3
@@ -106,7 +100,7 @@ export class CaptureTransmitter {
         const heavy = Object.keys(this.channels)
             .filter((k) => k.startsWith(`${captureId}-`))
             .map((k) => this.channels[k].key)
-            .filter((key) => key !== "lvmNdi" && key !== "ndi" && key !== "omt")
+            .filter((key) => key !== "lvmNdi" && key !== "omt")
         if (heavy.some((key) => key !== "server" && key !== "stage")) return null
         return heavy
     }
@@ -350,9 +344,6 @@ export class CaptureTransmitter {
             case "lvmNdi":
                 if (format === 0) LvmNdiBridge.push(captureId, { data: buffer, width: size.width, height: size.height, stride: size.width * 4 })
                 break
-            case "ndi":
-                this.sendRawToNdi(captureId, buffer, size, format)
-                break
             case "omt":
                 this.sendRawToOmt(captureId, buffer, size, format)
                 break
@@ -385,16 +376,6 @@ export class CaptureTransmitter {
         // BGRA: build a NativeImage once and use the standard converter path
         const image = nativeImage.createFromBitmap(buffer, size)
         if (!image.isEmpty()) this.sendBufferToBlackmagic(captureId, image)
-    }
-
-    private static sendRawToNdi(captureId: string, buffer: Buffer, size: Size, format: number) {
-        if (!NdiSender.NDI[captureId]?.sender) return
-        if (NdiSender.isBusyNDI(captureId)) return
-        const output = OutputHelper.getOutput(captureId)
-        const ratio = size.height ? size.width / size.height : 16 / 9
-        const transparent = output?.transparent === true
-        const framerate = output?.captureOptions?.framerates?.ndi || 30
-        NdiSender.sendVideoBufferNDI(captureId, Buffer.from(buffer), { size, ratio, framerate, transparent, format })
     }
 
     private static sendRawToOmt(captureId: string, buffer: Buffer, size: Size, format: number) {
@@ -450,11 +431,6 @@ export class CaptureTransmitter {
                 LvmNdiBridge.push(captureId, { data: buffer, width: size.width, height: size.height, stride: size.width * 4 })
                 break
             }
-            case "ndi": {
-                const fitted = this.toConfiguredSize(captureId, image)
-                this.sendBufferToNdi(captureId, fitted.image, { size: fitted.size })
-                break
-            }
             case "omt": {
                 const fitted = this.toConfiguredSize(captureId, image)
                 this.sendBufferToOmt(captureId, fitted.image, { size: fitted.size })
@@ -487,24 +463,6 @@ export class CaptureTransmitter {
         return this.DEFAULT_SERVER_SCALE
     }
 
-    // NDI
-    static sendBufferToNdi(captureId: string, image: NativeImage, { size }: { size: { width: number; height: number } }) {
-        if (!NdiSender.NDI[captureId]?.sender) return
-
-        // NDI drops to the latest frame while a send is in flight; skip the expensive toBitmap readback
-        // for frames that would be dropped anyway (avoids ~33MB/frame of throwaway allocation at 4K).
-        if (NdiSender.isBusyNDI(captureId)) return
-
-        const buffer = image.toBitmap()
-
-        const output = OutputHelper.getOutput(captureId)
-        const ratio = image.getAspectRatio()
-        const transparent = output?.transparent === true
-        const framerate = output?.captureOptions?.framerates?.ndi || 30
-
-        NdiSender.sendVideoBufferNDI(captureId, buffer, { size, ratio, framerate, transparent })
-    }
-
     // OMT
     static sendBufferToOmt(captureId: string, image: NativeImage, { size }: { size: { width: number; height: number } }) {
         if (!OmtSender.OMT[captureId]?.sender) return
@@ -524,8 +482,19 @@ export class CaptureTransmitter {
     }
 
     private static convertToRGBA(buffer: Buffer): void {
-        if (this.IS_BIG_ENDIAN) util.ImageBufferAdjustment.ARGBtoRGBA(buffer)
-        else util.ImageBufferAdjustment.BGRAtoRGBA(buffer)
+        for (let offset = 0; offset + 3 < buffer.length; offset += 4) {
+            if (this.IS_BIG_ENDIAN) {
+                const alpha = buffer[offset]
+                buffer[offset] = buffer[offset + 1]
+                buffer[offset + 1] = buffer[offset + 2]
+                buffer[offset + 2] = buffer[offset + 3]
+                buffer[offset + 3] = alpha
+            } else {
+                const blue = buffer[offset]
+                buffer[offset] = buffer[offset + 2]
+                buffer[offset + 2] = blue
+            }
+        }
     }
 
     static resizeImage(image: NativeImage, initialSize: Size, newSize: Size) {

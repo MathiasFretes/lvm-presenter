@@ -7,8 +7,6 @@ import { gpuCompositingAvailable, gpuStateSettled } from "../../utils/gpu"
 import { initializeSender } from "../../blackmagic/bmdTalk"
 import { CaptureHelper } from "../../capture/CaptureHelper"
 import { SenderCapture } from "../../capture/SenderCapture"
-import { NdiSender } from "../../ndi/NdiSender"
-import { setDataNDI } from "../../ndi/talk"
 import { OmtSender } from "../../omt/OmtSender"
 import { setDataOMT } from "../../omt/talk"
 import { wait } from "../../utils/helpers"
@@ -119,14 +117,8 @@ export class OutputLifecycle {
             delete this.pendingCaptureStart[id]
 
             if (!CaptureHelper.Lifecycle || !OutputHelper.getOutput(id)) return // window closed before timeout finished
-            CaptureHelper.Lifecycle.startCapture(id, { lvmNdi: LvmNdiBridge.selected(id), ndi: output.ndi || false, omt: output.omt || false, blackmagic: !!output.blackmagic, webrtc: !!output.webrtcData?.streaming, rtmp: !!output.rtmpData?.streaming })
+            CaptureHelper.Lifecycle.startCapture(id, { lvmNdi: LvmNdiBridge.selected(id), omt: output.omt || false, blackmagic: !!output.blackmagic, webrtc: !!output.webrtcData?.streaming, rtmp: !!output.rtmpData?.streaming })
         }, 1200)
-
-        // NDI
-        if (output.ndi) {
-            await NdiSender.createSenderNDI(id, NdiSender.initNameNDI(output.ndiData?.name, output.name), output.ndiData?.groups)
-            if (output.ndiData) setDataNDI({ id, ...output.ndiData })
-        }
 
         // OMT
         if (output.omt) {
@@ -588,22 +580,20 @@ export class OutputLifecycle {
         const forwardOffMain = (rec: { tex: any; source: any; width: number; height: number }) => {
             const { tex, source, width, height } = rec
             const output = OutputHelper.getOutput(id)
-            const framerate = output?.captureOptions?.framerates?.ndi || 30
+            const framerate = output?.captureOptions?.framerates?.omt || 30
             const ratio = height ? width / height : 16 / 9
             const transparent = output?.transparent === true
-            const omtFramerate = output?.captureOptions?.framerates?.omt || framerate
             const fmt = transparent ? 2 : 1
-            const hasNdi = !!NdiSender.NDI[id]?.sender
             const hasOmt = !!OmtSender.OMT[id]?.sender
             const memberFramerates: { [m: string]: number } = { [id]: framerate }
-            const groupIds = hasNdi || hasOmt ? [id] : []
+            const groupIds = hasOmt ? [id] : []
             const groupInfo = groupIds.length ? CaptureHelper.Transmitter.groupOffMainInfo(groupIds) : null
             const mixed = !!groupInfo && groupInfo.eligible && groupInfo.needsScaled && typeof addon.readbackConsume === "function"
             const scaled = mixed ? CaptureHelper.Transmitter.getScaledTarget({ width, height }) : null
             const seq = ++offMainSeq
-            // an output sends on one protocol, and each has its own worker
-            const captureOpts = { size: { width, height }, ratio, framerate: hasOmt ? omtFramerate : framerate, memberFramerates, format: fmt, transparent, dstW: scaled?.dstW || 0, dstH: scaled?.dstH || 0, seq, members: [id], depth: OutputLifecycle.depthFor(id) }
-            if (hasOmt ? OmtSender.captureFrameOMT(id, source, captureOpts) : NdiSender.captureFrameNDI(id, source, captureOpts)) {
+            // OMT retains its own off-main worker.
+            const captureOpts = { size: { width, height }, ratio, framerate, memberFramerates, format: fmt, transparent, dstW: scaled?.dstW || 0, dstH: scaled?.dstH || 0, seq, members: [id], depth: OutputLifecycle.depthFor(id) }
+            if (OmtSender.captureFrameOMT(id, source, captureOpts)) {
                 forwardAt.set(seq, { t: Date.now(), unc: OutputLifecycle.globalInFlight === 0, px: width * height })
                 OutputLifecycle.globalInFlight++
                 offMainInFlight++
@@ -743,7 +733,7 @@ export class OutputLifecycle {
             const source = process.platform === "linux" ? { planes: info.planes, modifier: info.modifier } : info.sharedTextureHandle
             const requestedFormat = CaptureHelper.Transmitter.getReadbackFormat(id, { width, height })
 
-            const offMainIds = NdiSender.NDI[id]?.sender || OmtSender.OMT[id]?.sender ? [id] : []
+            const offMainIds = OmtSender.OMT[id]?.sender ? [id] : []
             const groupInfo = offMainIds.length ? CaptureHelper.Transmitter.groupOffMainInfo(offMainIds) : null
             const hasGpuDownscale = typeof addon.readbackConsume === "function"
             const canOffMain = !LvmNdiBridge.selected(id) && !!groupInfo && groupInfo.eligible && (!groupInfo.needsScaled || hasGpuDownscale)
@@ -873,7 +863,6 @@ export class OutputLifecycle {
 
         CaptureHelper.Lifecycle.stopCapture(id)
         await LvmNdiBridge.disable(id)
-        NdiSender.stopSenderNDI(id)
         OmtSender.stopSenderOMT(id)
         BlackmagicSender.stop(id)
         // free the addon's reused readback buffers for this output (no-op if the addon/pool isn't present)

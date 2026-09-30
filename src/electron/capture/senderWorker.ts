@@ -1,6 +1,6 @@
 import { parentPort } from "worker_threads"
 
-// Protocol-independent engine for the network sender workers (../ndi/ndiWorker, ../omt/omtWorker), which
+// Protocol-independent engine for the network sender worker (../omt/omtWorker), which
 // run it with their own SenderAdapter.
 
 if (!parentPort) throw new Error("A sender worker must be run as a worker_thread")

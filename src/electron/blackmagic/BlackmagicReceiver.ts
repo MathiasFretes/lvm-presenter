@@ -5,7 +5,7 @@ type CaptureChannel = any
 type CaptureFrame = any
 import { toApp } from ".."
 import { BLACKMAGIC } from "../../types/Channels"
-import util from "../ndi/vingester-util"
+import { argbToRgba, bgraToRgba } from "./pixelFormat"
 import { OutputHelper } from "../output/OutputHelper"
 import { BlackmagicManager } from "./BlackmagicManager"
 import { InputImageBufferConverter } from "./ImageBufferConverter"
@@ -155,11 +155,11 @@ export class BlackmagicReceiver {
      */
     static convertVideoFrameFormat(frame: Buffer, format: string, size: Size): Buffer {
         if (format.includes("ARGB")) {
-            util.ImageBufferAdjustment.ARGBtoRGBA(frame)
+            argbToRgba(frame)
         } else if (format.includes("YUV")) {
             frame = InputImageBufferConverter.YUVtoRGBA(frame, size)
         } else if (format.includes("BGRA")) {
-            util.ImageBufferAdjustment.BGRAtoRGBA(frame)
+            bgraToRgba(frame)
         } else if (format.includes("RGBXLE")) {
             InputImageBufferConverter.RGBXLEtoRGBA(frame)
         } else if (format.includes("RGBLE")) {

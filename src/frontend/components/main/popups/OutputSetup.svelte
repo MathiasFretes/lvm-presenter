@@ -9,11 +9,9 @@
 
     const localTypes = [
         { id: "window", name: translateText("settings.window"), icon: "hdmi", tip: "HDMI, DisplayPort" },
-        { id: "blackmagic", name: "Blackmagic Design", icon: "blackmagic", tip: "DeckLink, UltraStudio" }
     ]
 
     const networkTypes = [
-        { id: "ndi", name: "NDI®", icon: "ndi", tip: "IP, OBS" },
         { id: "omt", name: "OMT", icon: "omt", tip: "IP" },
         { id: "webrtc", name: "WebRTC", icon: "broadcast", tip: "WHIP, restream.io" },
         { id: "rtmp", name: "RTMP", icon: "broadcast", tip: "YouTube, Twitch, Facebook Live" }

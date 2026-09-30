@@ -1,6 +1,6 @@
 import { CaptureHelper } from "./CaptureHelper"
 
-// Main-thread side of the off-main capture path, shared by the network sender proxies (NdiSender,
+// Main-thread side of the off-main capture path, shared by the network sender proxies (OMT,
 // OmtSender), whose workers report the same things about a capture.
 
 /** off-main capture request: the worker reads the shared texture back, converts and sends it */

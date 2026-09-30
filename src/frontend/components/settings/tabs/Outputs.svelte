@@ -1,13 +1,13 @@
 <script lang="ts">
     import { onDestroy } from "svelte"
     import { uid } from "uid"
-    import { BLACKMAGIC, NDI, OMT, OUTPUT } from "../../../../types/Channels"
+    import { BLACKMAGIC, OMT, OUTPUT } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
     import type { Option } from "../../../../types/Main"
     import type { Output, RtmpDestination } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { requestMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, omtData, outputDisplay, outputs, rtmpStatus, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activeStage, activeStyle, currentOutputSettings, ndiData, omtData, outputDisplay, outputs, rtmpStatus, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
@@ -110,29 +110,6 @@
     function editStage() {
         activeStage.set({ id: stageId, items: [] })
         activePage.set("stage")
-    }
-
-    // ndi
-    function updateNdiData(e: any, key: string) {
-        let id = currentOutput?.id
-        if (!id) return
-
-        let newData = $outputs[id]?.ndiData
-        if (!newData) newData = {}
-
-        let value = e?.detail?.id ?? e
-
-        newData[key] = value
-
-        updateOutput("ndiData", newData)
-
-        send(NDI, ["NDI_DATA"], { id, ...newData })
-
-        if (key === "name" || key === "groups") {
-            alertMessage.set("settings.restart_for_change")
-            activePopup.set("alert")
-            saved.set(false)
-        }
     }
 
     // omt
@@ -415,29 +392,8 @@
 {/if}
 
 {#if currentOutput?.ndi}
-    <Title label="NDI®" icon="ndi" />
-
-    <InputRow>
-        {#if currentOutput.invisible && !currentOutput.blackmagic}
-            <MaterialPopupButton label="edit.size" value={outputLabel} name={outputLabel} icon="resize" popupId="change_output_values" />
-        {/if}
-        <MaterialDropdown label="settings.frame_rate" value={currentOutput.ndiData?.framerate || "30"} defaultValue="30" options={framerates} on:change={(e) => updateNdiData(e.detail, "framerate")} />
-    </InputRow>
-
-    <InputRow>
-        <MaterialTextInput label="inputs.name" value={currentOutput.ndiData?.name || `LVM Presenter NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} defaultValue={`LVM Presenter NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} on:change={(e) => updateNdiData(e.detail, "name")} />
-        <MaterialTextInput label="inputs.group" title="settings.comma_seperated" value={currentOutput.ndiData?.groups || ""} defaultValue="" placeholder="public" on:change={(e) => updateNdiData(e.detail, "groups")} />
-    </InputRow>
-
-    <!-- not sure if we need to toggle this off? -->
-    <MaterialToggleSwitch label="settings.transparent" checked={currentOutput.transparent} defaultValue={true} on:change={(e) => updateOutput("transparent", e.detail)} />
-
-    <!-- Connections count (connection status visible by blue indicator) -->
-    <!-- {#if $ndiData[currentOutput?.id || ""]?.connections > 0}
-        <div style="padding: 10px;font-size: 0.8em;opacity: 0.4;text-align: center;">
-            {$ndiData[currentOutput?.id || ""].connections}
-        </div>
-    {/if} -->
+    <Title label="NDI heredado deshabilitado" icon="ndi" />
+    <p>Esta salida requiere migración a LVM NDI. La configuración anterior ya no transmite.</p>
 {/if}
 
 {#if currentOutput?.omt}
