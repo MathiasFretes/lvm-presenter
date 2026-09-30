@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const packageDir = dirname(dirname(fileURLToPath(import.meta.url)))
-const configFile = join(packageDir, 'build', 'ndi-setup.json')
+const configFile = join(packageDir, '.ndi-cache', 'ndi-setup.json')
 const addonFile = join(packageDir, 'build', 'Release', 'lvm_ndi.node')
 if (!existsSync(configFile) || !existsSync(addonFile)) {
   console.error('Primero ejecutá npm run ndi:setup y npm run ndi:build.')

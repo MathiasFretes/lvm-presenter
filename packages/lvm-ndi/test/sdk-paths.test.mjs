@@ -22,3 +22,10 @@ test('finds a runtime DLL without requiring it for SDK detection', () => {
   assert.equal(findRuntime(null, { env, exists }), runtime)
   assert.equal(runtimeCandidates(null, env)[0], runtime)
 })
+
+test('finds the package cache produced by automatic extraction', () => {
+  const packageDir = resolve('C:\\lvm-ndi')
+  const sdk = join(packageDir, '.ndi-cache', 'sdk-unpacked', 'app')
+  const exists = (path) => path === join(sdk, 'Include', 'Processing.NDI.Lib.h')
+  assert.equal(findSdk({ env: {}, exists, packageDir }), sdk)
+})

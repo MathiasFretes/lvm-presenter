@@ -5,7 +5,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const packageDir = dirname(dirname(fileURLToPath(import.meta.url)))
-const configFile = join(packageDir, 'build', 'ndi-setup.json')
+const configFile = join(packageDir, '.ndi-cache', 'ndi-setup.json')
 if (!existsSync(configFile)) {
   console.error('Falta la configuración local. Ejecutá npm run ndi:setup primero.')
   process.exit(2)

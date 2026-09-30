@@ -4,9 +4,8 @@ Original LVM sender adapter for Windows. It uses the official NDI SDK at build t
 
 ## Build prerequisites
 
-- Official NDI SDK obtained under its current terms. The build needs its headers, but the SDK does not have to be installed permanently on a developer PC; a CI or build machine can hold it.
-- Windows x64, Visual Studio C++ Build Tools, Python and local `node-gyp`.
-- A folder containing `Include/Processing.NDI.Lib.h`. `ndi:setup` searches the normal NDI 6 install locations, `LOCALAPPDATA/LVM/ndi-sdk`, `NDI_SDK_DIR`, and `LVM_NDI_SDK_DIR`.
+- Windows x64, PowerShell 7, Visual Studio C++ Build Tools, Python and local `node-gyp`.
+- `ndi:setup` first searches normal NDI 6 install locations, `LOCALAPPDATA/LVM/ndi-sdk`, `NDI_SDK_DIR`, `LVM_NDI_SDK_DIR`, and the package cache. If no SDK is found, it downloads the official NDI 6.3.2 installer and the published innoextract 1.9 Windows binary, checks pinned SHA-256 hashes and the installer's Vizrt signature, then extracts them into the ignored `.ndi-cache/` folder. It does not run the installer or install the SDK system-wide.
 
 From this directory:
 
@@ -18,9 +17,9 @@ npm test
 npm run ndi:verify
 ```
 
-`ndi:setup` records only local paths in ignored `build/ndi-setup.json`; it does not copy SDK files into Git. If it cannot find the SDK, it points to the official [NDI SDK download form](https://ndi.video/for-developers/ndi-sdk/download/). That form needs the licensee's own details and cannot be bypassed by a build script. An authorized CI process can provide the SDK through its own secure provisioning and set `NDI_SDK_DIR`.
+`ndi:setup` records only local paths in ignored `.ndi-cache/ndi-setup.json`; it does not copy SDK files into Git. It uses the [official NDI hosted installer](https://downloads.ndi.tv/SDK/NDI_SDK/NDI%206%20SDK.exe), which was verified as version 6.3.2 when this workflow was written. If NDI changes that file, the pinned hash blocks an unreviewed replacement. Set `LVM_NDI_AUTO_DOWNLOAD=0` to require a pre-provisioned SDK in CI, or provide `NDI_SDK_DIR`. The [NDI download page](https://ndi.video/for-developers/ndi-sdk/download/) remains the fallback if the direct file becomes unavailable.
 
-Runtime loading also checks `NDI_RUNTIME_DIR_V6` and `NDI_RUNTIME_DIR_V5`. The runtime DLL must be named `Processing.NDI.Lib.x64.dll`. Packaging and any SDK redistribution require a separate review of the applicable NDI terms; the [current developer page](https://ndi.video/for-developers/) describes permitted software uses, and the exact SDK license controls distribution.
+Runtime loading also checks `NDI_RUNTIME_DIR_V6` and `NDI_RUNTIME_DIR_V5`. The runtime DLL must be named `Processing.NDI.Lib.x64.dll`. The extracted SDK contains `NDI SDK License Agreement.pdf`. Review those terms before product packaging or redistribution; the [current developer page](https://ndi.video/for-developers/) describes permitted software uses.
 
 The API accepts BGRA or RGBA 8-bit non-premultiplied frames with an even width, 30 or 60 fps. `send()` copies the frame and calls the synchronous NDI sender function. `ndi:verify` checks native loading and sends one small frame into the SDK; it does not verify that a receiver displays it. Capture and Electron output wiring are separate integration steps. No network E2E has been run yet.
 

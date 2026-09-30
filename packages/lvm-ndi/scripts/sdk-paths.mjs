@@ -8,20 +8,21 @@ function unique(paths) {
   return [...new Set(paths.filter(Boolean).map((path) => resolve(path)))]
 }
 
-export function sdkCandidates(env = process.env) {
+export function sdkCandidates(env = process.env, packageDir) {
   const programFiles = env.ProgramFiles ?? 'C:\\Program Files'
   const programFilesX86 = env['ProgramFiles(x86)'] ?? 'C:\\Program Files (x86)'
   return unique([
     env.LVM_NDI_SDK_DIR,
     env.NDI_SDK_DIR,
+    packageDir && join(packageDir, '.ndi-cache', 'sdk-unpacked', 'app'),
     env.LOCALAPPDATA && join(env.LOCALAPPDATA, 'LVM', 'ndi-sdk'),
     join(programFiles, 'NDI', 'NDI 6 SDK'),
     join(programFilesX86, 'NDI', 'NDI 6 SDK')
   ])
 }
 
-export function findSdk({ env = process.env, exists = existsSync } = {}) {
-  return sdkCandidates(env).find((directory) => exists(join(directory, 'Include', header))) ?? null
+export function findSdk({ env = process.env, exists = existsSync, packageDir } = {}) {
+  return sdkCandidates(env, packageDir).find((directory) => exists(join(directory, 'Include', header))) ?? null
 }
 
 export function runtimeCandidates(sdkDir, env = process.env) {
