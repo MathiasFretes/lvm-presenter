@@ -9,3 +9,10 @@ Status: audited before removal. Scope: the Electron build blockers and their vis
 | `slideshow` | `src/electron/output/ppt/presentation.ts` still references an undefined `Slideshow` class and is exposed through three main IPC actions; `PowerPointPreview.svelte` requests it. The package is already absent. | None. | Disable external PowerPoint/Keynote control with a clear unavailable response. Keep `libreConverter.ts` and `pptToShow.ts`: file conversion/import is a separate existing feature. |
 
 The older NDI input, DeckLink hardware and external slideshow controls are **not** covered by LVM NDI 0.1. They remain future capabilities and must not be presented as working features in the product. This milestone preserves the presentation engine, local outputs, LVM NDI sender, and file import/conversion.
+
+## Final gate
+
+- `a524130` is an ancestor of `0529207`: this cleanup includes the completed LVM NDI integration.
+- `grandiose`: DEAD. `macadam`: OPTIONAL capability with no installed package. `slideshow`: DEAD external controller. None of these three packages is declared in `package.json` or `package-lock.json`; no lockfile regeneration is needed.
+- `npm ci`, Electron TypeScript build, production build, 164 unit tests and an isolated Presenter startup/shutdown smoke passed. No SDK binary, DLL, LIB or `.node` file was added to Git.
+- `npm run test:svelte` reports 189 errors, 62 warnings and 242 hints on both `main` and this branch. Comparing errors by file and message found zero new diagnostics, zero removed diagnostics and zero errors in Svelte files changed by M7.7. These diagnostics remain existing project debt outside this cleanup.
