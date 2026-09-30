@@ -6,6 +6,12 @@
   "main": "./src/index.mjs",
   "types": "./src/index.d.ts",
   "scripts": {
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "ndi:setup": "node scripts/setup-ndi.mjs",
+    "ndi:build": "node scripts/build-ndi.mjs",
+    "ndi:verify": "node scripts/verify-native.mjs"
+  },
+  "devDependencies": {
+    "node-gyp": "11.5.0"
   }
 }

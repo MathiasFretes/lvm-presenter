@@ -4,21 +4,25 @@ Original LVM sender adapter for Windows. It uses the official NDI SDK at build t
 
 ## Build prerequisites
 
-- Official NDI SDK installed and its terms reviewed.
-- Visual Studio C++ Build Tools, Python and `node-gyp` for the Electron/Node version being targeted.
-- Windows x64. Supply the SDK folder containing `Include/Processing.NDI.Lib.h`.
+- Official NDI SDK obtained under its current terms. The build needs its headers, but the SDK does not have to be installed permanently on a developer PC; a CI or build machine can hold it.
+- Windows x64, Visual Studio C++ Build Tools, Python and local `node-gyp`.
+- A folder containing `Include/Processing.NDI.Lib.h`. `ndi:setup` searches the normal NDI 6 install locations, `LOCALAPPDATA/LVM/ndi-sdk`, `NDI_SDK_DIR`, and `LVM_NDI_SDK_DIR`.
 
 From this directory:
 
 ```powershell
-npx node-gyp rebuild --ndi_sdk_dir="C:\Program Files\NDI\NDI 6 SDK"
-$env:LVM_NDI_RUNTIME_DIR = 'C:\Program Files\NDI\NDI 6 Runtime\v6'
+npm ci
+npm run ndi:setup
+npm run ndi:build
 npm test
+npm run ndi:verify
 ```
 
-Runtime loading also checks `NDI_RUNTIME_DIR_V6` and `NDI_RUNTIME_DIR_V5`. The runtime DLL must be named `Processing.NDI.Lib.x64.dll`. Packaging and any SDK redistribution require a separate license review. Current NDI documentation says the standard SDK is free for non-commercial use; commercial use requires checking its current terms with NDI.
+`ndi:setup` records only local paths in ignored `build/ndi-setup.json`; it does not copy SDK files into Git. If it cannot find the SDK, it points to the official [NDI SDK download form](https://ndi.video/for-developers/ndi-sdk/download/). That form needs the licensee's own details and cannot be bypassed by a build script. An authorized CI process can provide the SDK through its own secure provisioning and set `NDI_SDK_DIR`.
 
-The API accepts BGRA or RGBA 8-bit non-premultiplied frames with an even width, 30 or 60 fps. `send()` copies the frame and calls the synchronous NDI sender function. Capture and Electron output wiring are a separate integration step. No network E2E has been run yet.
+Runtime loading also checks `NDI_RUNTIME_DIR_V6` and `NDI_RUNTIME_DIR_V5`. The runtime DLL must be named `Processing.NDI.Lib.x64.dll`. Packaging and any SDK redistribution require a separate review of the applicable NDI terms; the [current developer page](https://ndi.video/for-developers/) describes permitted software uses, and the exact SDK license controls distribution.
+
+The API accepts BGRA or RGBA 8-bit non-premultiplied frames with an even width, 30 or 60 fps. `send()` copies the frame and calls the synchronous NDI sender function. `ndi:verify` checks native loading and sends one small frame into the SDK; it does not verify that a receiver displays it. Capture and Electron output wiring are separate integration steps. No network E2E has been run yet.
 
 ## Acceptance gate
 
