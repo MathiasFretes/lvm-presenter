@@ -1,0 +1,361 @@
+<script lang="ts">
+    import { tick } from "svelte"
+    import { Main } from "../../../../types/IPC/Main"
+    import type { Popups } from "../../../../types/Main"
+    import { importFromClipboard } from "../../../converters/importHelpers"
+    import { sendMain } from "../../../IPC/main"
+    import { activePopup, alertMessage, popupData } from "../../../stores"
+    import { translateText } from "../../../utils/language"
+    import { presentationExtensions } from "../../../values/extensions"
+    import Icon from "../../helpers/Icon.svelte"
+    import HRule from "../../input/HRule.svelte"
+    import InputRow from "../../input/InputRow.svelte"
+    import MaterialButton from "../../inputs/MaterialButton.svelte"
+    import Tip from "../Tip.svelte"
+
+    let mode = $popupData.mode
+    popupData.set({})
+
+    const lvmpresenter_formats = [
+        { name: "formats.show", title: "LVM Presenter Song/Presentation File", icon: "slide", extensions: ["show", "json"], id: "lvmpresenter" },
+        { name: "formats.project", title: "LVM Presenter Project File", icon: "project", extensions: ["project", "shows", "json", "zip"], id: "lvmpresenter_project" }, // , "fsproject", "fsp"
+        { name: "formats.template", title: "LVM Presenter Template File", icon: "templates", extensions: ["fstemplate", "fst", "template", "json", "zip"], id: "lvmpresenter_template" },
+        { name: "formats.overlay", title: "LVM Presenter Overlay File", icon: "overlays", extensions: ["fsoverlay", "fso", "overlay", "json", "zip"], id: "lvmpresenter_overlay" },
+        { name: "formats.action", title: "LVM Presenter Action File", icon: "actions", extensions: ["fsaction", "action", "json"], id: "lvmpresenter_action" },
+        { name: "stage.stage_layout", title: "LVM Presenter Stage Layout File", icon: "stage", extensions: ["fsstage", "stage", "json"], id: "lvmpresenter_stage" },
+        { name: "formats.theme", title: "LVM Presenter Theme File", icon: "theme", extensions: ["fstheme", "theme", "json"], id: "lvmpresenter_theme" }
+    ]
+
+    const lvmpresenter_primary_formats = lvmpresenter_formats.filter((format) => ["lvmpresenter", "lvmpresenter_project"].includes(format.id))
+    const lvmpresenter_more_formats = lvmpresenter_formats.filter((format) => ["lvmpresenter_template", "lvmpresenter_overlay", "lvmpresenter_action", "lvmpresenter_stage", "lvmpresenter_theme"].includes(format.id))
+
+    const text_formats: { name: string; extensions: string[]; id: string; shortcut?: string; tutorial?: string; popup?: Popups }[] = [
+        { name: "formats.text", extensions: ["txt"], id: "txt" },
+        { name: "CSV", extensions: ["csv"], id: "csv" },
+        { name: "ChordPro", extensions: ["cho", "crd", "chopro", "chordpro", "chord", "pro", "txt", "onsong"], id: "chordpro" },
+        { name: "Word", extensions: ["doc", "docx"], id: "word" },
+        { name: "ProPresenter", extensions: ["pro4", "pro5", "pro6", "pro", "json", "proBundle"], id: "propresenter" },
+        {
+            name: "EasyWorship",
+            extensions: ["db"],
+            id: "easyworship",
+            tutorial: "Import the <b>SongsWords.db/SongWords.db</b> file from the Data folder!<br>Optionally select <b>Songs.db</b> at the same time to also import title/metadata.<br><br>Often located in the Documents folder:<br><i>Documents/Softouch/EasyWorship/Default/v6.1/Databases/Data/</i>"
+        },
+        {
+            name: "VideoPsalm",
+            extensions: ["json", "vpc"],
+            id: "videopsalm",
+            tutorial: "Find the .vpc or .json file(s) often located in Documents\\VideoPsalm\\Songbooks"
+        },
+        { name: "OpenLP/OpenLyrics", extensions: ["xml", "sqlite"], id: "openlp" },
+        { name: "OpenSong", extensions: [], id: "opensong" },
+        { name: "MediaShout", extensions: ["ssc", "xml", "mdb"], id: "mediashout" }, // SSC (Songs5.mdb)
+        { name: "Quelea", extensions: ["xml", "qsp"], id: "quelea" },
+        { name: "SoftProjector", extensions: ["sps"], id: "softprojector" },
+        { name: "Songbeamer", id: "songbeamer", extensions: [], popup: "songbeamer_import" },
+        { name: "Easyslides", extensions: ["xml"], id: "easyslides" },
+        { name: "VerseVIEW", extensions: ["xml"], id: "verseview" }
+    ]
+
+    const media_formats = [
+        { name: "Lessons.church", title: "LVM Service\nhttps://lessons.church", extensions: ["json", "olp", "olf"], id: "lessons" },
+        { name: "PDF", title: "Added to your project", extensions: ["pdf"], id: "pdf" },
+        { name: "PowerPoint", extensions: [], id: "powerpoint" }
+    ]
+
+    const powerpoint_options = [
+        { name: "info.slides", description: "Imperfect formatting.", icon: "txt", click: pptText },
+        { name: "PDF", description: "Requires LibreOffice installed.", icon: "pdf", click: libreOfficeConvert },
+        { name: "PDF (Online)", description: "Requires network connection, and manual steps.", icon: "pdf", click: onlineConvert },
+        { name: "Controller (Deprecated)", description: "Requires PowerPoint/Keynote installed. Useful for live streams, but buggy.", icon: "powerkey", click: pptController }
+    ]
+
+    function pptText() {
+        sendMain(Main.IMPORT, { channel: "powerpoint", format: { name: "PowerPoint", extensions: ["ppt", "pptx"] } })
+        activePopup.set(null)
+    }
+    function libreOfficeConvert() {
+        sendMain(Main.LIBREOFFICE_CONVERT, { type: "powerpoint" })
+    }
+    function onlineConvert() {
+        sendMain(Main.URL, "https://www.ilovepdf.com/powerpoint_to_pdf")
+        // https://cloudconvert.com/ppt-to-jpg
+        activePopup.set(null)
+    }
+    function pptController() {
+        sendMain(Main.IMPORT, { channel: "powerkey", format: { name: "PowerPoint/Keynote", extensions: presentationExtensions } })
+    }
+
+    function displayTutorial(format: any) {
+        if (!format.tutorial) {
+            activePopup.set(null)
+            return
+        }
+
+        alertMessage.set(format.tutorial)
+        activePopup.set("alert")
+    }
+
+    function importLvmPresenterFormat(format: any) {
+        const name = translateText(format.name)
+        sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name } })
+        displayTutorial(format)
+    }
+
+    // function openCalendar() {
+    //     activeDrawerTab.set("calendar")
+    //     activePage.set("show")
+    //     activePopup.set(null)
+    // }
+
+    // function openScripture() {
+    //     activePopup.set("import_scripture")
+    // }
+
+    let openedPage = ""
+</script>
+
+{#if openedPage === "powerpoint"}
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (openedPage = "")} />
+
+    <div style="display: flex;flex-direction: column;gap: 5px;">
+        {#each powerpoint_options as option}
+            <MaterialButton variant="outlined" style="justify-content: start;flex: 1;min-height: 50px;font-weight: normal;" on:click={() => option.click()}>
+                <img style="height: 60px;width: 70px;" src="./import-logos/{option.icon}.webp" alt="{option.name}-logo" draggable={false} />
+
+                <div style="display: flex;flex-direction: column;align-items: start;gap: 5px;">
+                    <p style="font-size: 1.1em;">{translateText(option.name)}</p>
+                    <span style="opacity: 0.5;">{translateText(option.description)}</span>
+                </div>
+            </MaterialButton>
+        {/each}
+    </div>
+
+    <Tip value="The best option would generally be to get a hold of the presentation as PDF format in the first place." top={20} />
+{:else if openedPage === "lvmpresenter_more"}
+    <MaterialButton class="popup-back" icon="back" iconSize={1.3} title="actions.back" on:click={() => (openedPage = "")} />
+
+    <div style="display: flex;gap: 5px;">
+        {#each lvmpresenter_more_formats as format}
+            <MaterialButton
+                variant="outlined"
+                title={format.title}
+                style="flex: 1;min-height: 50px;min-width: 280px;padding: 10px;gap: 15px;"
+                on:click={() => {
+                    importLvmPresenterFormat(format)
+                }}
+            >
+                <Icon style="height: 60px;" id={format.icon} size={2.5} white />
+                <p>{translateText(format.name)}</p>
+
+                <div class="lvmpresenter">
+                    <img style="height: 18px;padding: 0;" src="./import-logos/lvmpresenter.webp" alt="LVM Presenter-logo" draggable={false} />
+                </div>
+            </MaterialButton>
+        {/each}
+    </div>
+
+    <!-- <div style="display: flex;gap: 5px;margin-top: 10px;">
+        <MaterialButton variant="outlined" style="flex: 1;min-height: 50px;padding: 10px;gap: 15px;" on:click={openCalendar}>
+            <Icon style="height: 60px;" id="calendar" size={2.5} white />
+            <p>{translateText("tabs.calendar")}</p>
+        </MaterialButton>
+
+        <MaterialButton variant="outlined" style="flex: 1;min-height: 50px;padding: 10px;gap: 15px;" on:click={openScripture}>
+            <Icon style="height: 60px;" id="scripture" size={2.5} white />
+            <p>{translateText("tabs.scripture")}</p>
+        </MaterialButton>
+    </div> -->
+{:else if mode === "project"}
+    <div style="display: flex;gap: 5px;">
+        {#each media_formats.filter((a) => ["pdf", "powerpoint"].includes(a.id)) as format}
+            <InputRow style="flex: 1;">
+                <MaterialButton
+                    variant="outlined"
+                    style="justify-content: start;flex: 1;min-height: 50px;font-weight: normal;"
+                    on:click={() => {
+                        if (format.id === "powerpoint") {
+                            pptText()
+                            return
+                        }
+
+                        sendMain(Main.IMPORT, { channel: format.id, format })
+                        displayTutorial(format)
+                    }}
+                >
+                    <img style="height: 60px;width: 70px;" src="./import-logos/{format.id}.webp" alt="{format.id}-logo" draggable={false} />
+                    <p>{format.name}</p>
+                </MaterialButton>
+            </InputRow>
+        {/each}
+    </div>
+
+    <HRule title="settings.text_import" />
+
+    <div style="display: flex;gap: 5px;">
+        {#each text_formats.filter((a) => ["txt", "chordpro"].includes(a.id)) as format}
+            <MaterialButton
+                variant="outlined"
+                style="justify-content: start;flex: 1;min-height: 50px;font-weight: normal;"
+                on:click={() => {
+                    if (format.popup) {
+                        tick().then(() => {
+                            if (format.popup) {
+                                activePopup.set(format.popup)
+                            }
+                        })
+                    } else {
+                        let name = translateText(format.name)
+                        sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name } })
+                        displayTutorial(format)
+                    }
+                }}
+                title={format.shortcut ? ` [${format.shortcut}]` : ""}
+            >
+                <img style="height: 60px;width: 70px;" src="./import-logos/{format.id}.webp" alt="{format.id}-logo" draggable={false} />
+                <p>{translateText(format.name)}</p>
+            </MaterialButton>
+        {/each}
+    </div>
+
+    <MaterialButton
+        style="margin-top: 5px;"
+        variant="outlined"
+        on:click={() => {
+            importFromClipboard()
+            activePopup.set(null)
+        }}
+        title="actions.paste [Ctrl+Alt+I]"
+    >
+        <Icon id="paste" size={1.2} white />
+        {translateText("formats.clipboard")}
+    </MaterialButton>
+{:else}
+    <div style="display: flex;gap: 5px;">
+        {#each lvmpresenter_primary_formats as format}
+            <MaterialButton
+                variant="outlined"
+                title={format.title}
+                style="flex: 1;min-height: 50px;padding: 10px;gap: 15px;"
+                on:click={() => {
+                    importLvmPresenterFormat(format)
+                }}
+            >
+                <Icon style="height: 60px;" id={format.icon} size={2.5} white />
+                <p>{translateText(format.name)}</p>
+
+                <div class="lvmpresenter">
+                    <img style="height: 18px;padding: 0;" src="./import-logos/lvmpresenter.webp" alt="LVM Presenter-logo" draggable={false} />
+                </div>
+            </MaterialButton>
+        {/each}
+
+        <MaterialButton variant="outlined" style="flex: 1;min-height: 50px;padding: 10px;gap: 5px;" on:click={() => (openedPage = "lvmpresenter_more")}>
+            <p style="opacity: 0.9;">{translateText("create_show.more_options")}</p>
+            <Icon style="opacity: 0.8;height: 60px;margin-right: -15px;" id="next" size={2} white />
+        </MaterialButton>
+    </div>
+
+    <MaterialButton
+        style="margin-top: 5px;"
+        variant="outlined"
+        on:click={() => {
+            importFromClipboard()
+            activePopup.set(null)
+        }}
+        title="actions.paste [Ctrl+Alt+I]"
+    >
+        <Icon id="paste" size={1.2} white />
+        {translateText("formats.clipboard")}
+    </MaterialButton>
+
+    <HRule title="settings.media_import" />
+
+    <div style="display: flex;gap: 5px;">
+        {#each media_formats as format}
+            <InputRow style="flex: 1;">
+                <MaterialButton
+                    variant="outlined"
+                    title={format.title}
+                    style="justify-content: start;flex: 1;min-height: 50px;font-weight: normal;"
+                    on:click={() => {
+                        if (format.id === "powerpoint") {
+                            // openedPage = "powerpoint"
+                            pptText()
+                            return
+                        }
+
+                        sendMain(Main.IMPORT, { channel: format.id, format })
+                        displayTutorial(format)
+                    }}
+                >
+                    <img style="height: 60px;width: 70px;" src="./import-logos/{format.id}.webp" alt="{format.id}-logo" draggable={false} />
+                    <p>{format.name}</p>
+                </MaterialButton>
+
+                {#if format.id === "powerpoint"}
+                    <MaterialButton
+                        variant="outlined"
+                        style="padding: 6px;"
+                        on:click={() => {
+                            openedPage = "powerpoint"
+                        }}
+                        title="create_show.more_options"
+                    >
+                        <Icon id="next" style="opacity: 0.6;" size={1.8} white />
+                    </MaterialButton>
+                {/if}
+            </InputRow>
+        {/each}
+    </div>
+
+    <HRule title="settings.text_import" />
+
+    <div style="display: flex;gap: 5px;">
+        {#each text_formats as format}
+            <MaterialButton
+                variant="outlined"
+                style="justify-content: start;width: calc((100% / 3) - (5px * 2 / 3));min-height: 50px;font-weight: normal;border: 1px solid var(--primary-lighter);"
+                on:click={() => {
+                    if (format.popup) {
+                        tick().then(() => {
+                            if (format.popup) {
+                                activePopup.set(format.popup)
+                            }
+                        })
+                    } else {
+                        let name = translateText(format.name)
+                        sendMain(Main.IMPORT, { channel: format.id, format: { ...format, name } })
+                        displayTutorial(format)
+                    }
+                }}
+                title={format.shortcut ? ` [${format.shortcut}]` : ""}
+            >
+                <img style="height: 60px;width: 70px;" src="./import-logos/{format.id}.webp" alt="{format.id}-logo" draggable={false} />
+                <p>{translateText(format.name)}</p>
+            </MaterialButton>
+        {/each}
+    </div>
+{/if}
+
+<style>
+    div {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    img {
+        height: 100px;
+        max-width: 100%;
+        object-fit: contain;
+        padding: 10px;
+        padding-left: 0;
+    }
+
+    .lvmpresenter {
+        position: absolute;
+        bottom: 7px;
+        right: 10px;
+    }
+</style>

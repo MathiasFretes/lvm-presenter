@@ -1,0 +1,450 @@
+{
+  "project": {
+    "id": "lvm-culto-2026-09-27",
+    "name": "Culto General",
+    "created": 1790546400000,
+    "parent": "/",
+    "shows": [
+      {
+        "id": "lvm-culto-2026-09-27-song-1",
+        "name": "Canto de ejemplo",
+        "type": "show"
+      },
+      {
+        "id": "lvm-culto-2026-09-27-song-2",
+        "name": "Segundo canto de ejemplo",
+        "type": "show"
+      },
+      {
+        "id": "lvm-culto-2026-09-27-song-3",
+        "name": "Tercer canto de ejemplo",
+        "type": "show"
+      },
+      {
+        "id": "lvm-culto-2026-09-27-scripture-1",
+        "name": "Salmo 23:1",
+        "type": "show"
+      },
+      {
+        "id": "lvm-culto-2026-09-27-announcement-1",
+        "name": "Encuentro de jóvenes",
+        "type": "show"
+      },
+      {
+        "id": "lvm-culto-2026-09-27-sermon-1",
+        "name": "El buen pastor",
+        "type": "show"
+      }
+    ]
+  },
+  "parentFolder": "",
+  "shows": {
+    "lvm-culto-2026-09-27-song-1": {
+      "name": "Canto de ejemplo",
+      "origin": "lvm",
+      "private": false,
+      "category": null,
+      "settings": {
+        "activeLayout": "lvm-default",
+        "template": null
+      },
+      "timestamps": {
+        "created": 1790546400000,
+        "modified": null,
+        "used": null
+      },
+      "meta": {
+        "title": "Canto de ejemplo",
+        "key": "G"
+      },
+      "slides": {
+        "song-1-1": {
+          "group": "Verse",
+          "color": null,
+          "settings": {},
+          "notes": "",
+          "items": [
+            {
+              "style": "top:88px;left:50px;height:904px;width:1820px;",
+              "lines": [
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Texto de muestra para ensayo",
+                      "style": ""
+                    }
+                  ],
+                  "chords": [
+                    {
+                      "id": "song-1-1-0-0",
+                      "pos": 0,
+                      "key": "G"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        "song-1-2": {
+          "group": "Chorus",
+          "color": null,
+          "settings": {},
+          "notes": "",
+          "items": [
+            {
+              "style": "top:88px;left:50px;height:904px;width:1820px;",
+              "lines": [
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Cantamos juntos",
+                      "style": ""
+                    }
+                  ],
+                  "chords": [
+                    {
+                      "id": "song-1-2-0-0",
+                      "pos": 0,
+                      "key": "C"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "layouts": {
+        "lvm-default": {
+          "name": "Servicio",
+          "notes": "",
+          "slides": [
+            {
+              "id": "song-1-1"
+            },
+            {
+              "id": "song-1-2"
+            }
+          ]
+        }
+      },
+      "media": {}
+    },
+    "lvm-culto-2026-09-27-song-2": {
+      "name": "Segundo canto de ejemplo",
+      "origin": "lvm",
+      "private": false,
+      "category": null,
+      "settings": {
+        "activeLayout": "lvm-default",
+        "template": null
+      },
+      "timestamps": {
+        "created": 1790546400000,
+        "modified": null,
+        "used": null
+      },
+      "meta": {
+        "title": "Segundo canto de ejemplo",
+        "key": "D"
+      },
+      "slides": {
+        "song-2-1": {
+          "group": "Verse",
+          "color": null,
+          "settings": {},
+          "notes": "",
+          "items": [
+            {
+              "style": "top:88px;left:50px;height:904px;width:1820px;",
+              "lines": [
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Otra letra de muestra",
+                      "style": ""
+                    }
+                  ],
+                  "chords": [
+                    {
+                      "id": "song-2-1-0-0",
+                      "pos": 0,
+                      "key": "D"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "layouts": {
+        "lvm-default": {
+          "name": "Servicio",
+          "notes": "",
+          "slides": [
+            {
+              "id": "song-2-1"
+            }
+          ]
+        }
+      },
+      "media": {}
+    },
+    "lvm-culto-2026-09-27-song-3": {
+      "name": "Tercer canto de ejemplo",
+      "origin": "lvm",
+      "private": false,
+      "category": null,
+      "settings": {
+        "activeLayout": "lvm-default",
+        "template": null
+      },
+      "timestamps": {
+        "created": 1790546400000,
+        "modified": null,
+        "used": null
+      },
+      "meta": {
+        "title": "Tercer canto de ejemplo",
+        "key": "A"
+      },
+      "slides": {
+        "song-3-1": {
+          "group": "Verse",
+          "color": null,
+          "settings": {},
+          "notes": "",
+          "items": [
+            {
+              "style": "top:88px;left:50px;height:904px;width:1820px;",
+              "lines": [
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Una tercera canción de muestra",
+                      "style": ""
+                    }
+                  ],
+                  "chords": [
+                    {
+                      "id": "song-3-1-0-0",
+                      "pos": 0,
+                      "key": "A"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "layouts": {
+        "lvm-default": {
+          "name": "Servicio",
+          "notes": "",
+          "slides": [
+            {
+              "id": "song-3-1"
+            }
+          ]
+        }
+      },
+      "media": {}
+    },
+    "lvm-culto-2026-09-27-scripture-1": {
+      "name": "Salmo 23:1",
+      "origin": "lvm",
+      "private": false,
+      "category": null,
+      "settings": {
+        "activeLayout": "lvm-default",
+        "template": null
+      },
+      "timestamps": {
+        "created": 1790546400000,
+        "modified": null,
+        "used": null
+      },
+      "meta": {
+        "title": "Salmo 23:1"
+      },
+      "slides": {
+        "scripture-1": {
+          "group": "scripture",
+          "color": null,
+          "settings": {},
+          "notes": "",
+          "items": [
+            {
+              "style": "top:88px;left:50px;height:904px;width:1820px;",
+              "lines": [
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "JEHOVÁ es mi pastor; nada me faltará.",
+                      "style": ""
+                    }
+                  ]
+                },
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Salmo 23:1 · RV1909",
+                      "style": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "layouts": {
+        "lvm-default": {
+          "name": "Servicio",
+          "notes": "",
+          "slides": [
+            {
+              "id": "scripture-1"
+            }
+          ]
+        }
+      },
+      "media": {}
+    },
+    "lvm-culto-2026-09-27-announcement-1": {
+      "name": "Encuentro de jóvenes",
+      "origin": "lvm",
+      "private": false,
+      "category": null,
+      "settings": {
+        "activeLayout": "lvm-default",
+        "template": null
+      },
+      "timestamps": {
+        "created": 1790546400000,
+        "modified": null,
+        "used": null
+      },
+      "meta": {
+        "title": "Encuentro de jóvenes"
+      },
+      "slides": {
+        "announcement-1": {
+          "group": "announcement",
+          "color": null,
+          "settings": {},
+          "notes": "",
+          "items": [
+            {
+              "style": "top:88px;left:50px;height:904px;width:1820px;",
+              "lines": [
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Encuentro de jóvenes",
+                      "style": ""
+                    }
+                  ]
+                },
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Sábado, 18:00 · Sede Central",
+                      "style": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "layouts": {
+        "lvm-default": {
+          "name": "Servicio",
+          "notes": "",
+          "slides": [
+            {
+              "id": "announcement-1"
+            }
+          ]
+        }
+      },
+      "media": {}
+    },
+    "lvm-culto-2026-09-27-sermon-1": {
+      "name": "El buen pastor",
+      "origin": "lvm",
+      "private": false,
+      "category": null,
+      "settings": {
+        "activeLayout": "lvm-default",
+        "template": null
+      },
+      "timestamps": {
+        "created": 1790546400000,
+        "modified": null,
+        "used": null
+      },
+      "meta": {
+        "title": "El buen pastor"
+      },
+      "slides": {
+        "sermon-1": {
+          "group": "sermon",
+          "color": null,
+          "settings": {},
+          "notes": "",
+          "items": [
+            {
+              "style": "top:88px;left:50px;height:904px;width:1820px;",
+              "lines": [
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "El buen pastor",
+                      "style": ""
+                    }
+                  ]
+                },
+                {
+                  "align": "",
+                  "text": [
+                    {
+                      "value": "Lectura: Salmo 23",
+                      "style": ""
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "layouts": {
+        "lvm-default": {
+          "name": "Servicio",
+          "notes": "",
+          "slides": [
+            {
+              "id": "sermon-1"
+            }
+          ]
+        }
+      },
+      "media": {}
+    }
+  }
+}

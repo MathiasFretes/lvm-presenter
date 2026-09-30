@@ -1,0 +1,27 @@
+appId: app.lvmpresenter
+productName: LVM Presenter
+artifactName: LVM-Presenter-${version}-${arch}.${ext}
+
+files:
+    - build/electron/**
+    - build/types/**
+    - public/**
+    - "!node_modules/@napi-rs"
+
+# linux
+
+linux:
+    asarUnpack:
+        - "**/node_modules/libltc-wrapper/**/*"
+    category: AudioVideo
+    target:
+        - AppImage
+        - deb
+        - rpm
+    icon: build/public
+
+deb:
+    depends:
+        - libfontconfig1
+        - uuid-runtime
+        - libltc11

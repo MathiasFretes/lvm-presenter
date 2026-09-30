@@ -1,0 +1,80 @@
+import { get } from "svelte/store"
+import { Main } from "../../../../types/IPC/Main"
+import { sendMain } from "../../../IPC/main"
+import { activeRecording, currentRecordingStream } from "../../../stores"
+import { newToast } from "../../../utils/common"
+
+let mediaRecorder
+let recordedChunks: any[] = []
+const options: any = { mimeType: "video/webm; codecs=vp9" }
+export function createMediaRecorder(stream) {
+    newToast("toast.recording_started")
+    mediaRecorder = new MediaRecorder(stream, options)
+    mediaRecorder.start()
+
+    mediaRecorder.ondataavailable = handleDataAvailable
+    mediaRecorder.onstop = handleStop
+}
+
+export function mediaRecorderIsPaused() {
+    if (!mediaRecorder) return true
+    return mediaRecorder.state === "paused"
+}
+
+export function toggleMediaRecorder() {
+    if (!mediaRecorder) return false
+
+    if (mediaRecorder.state === "paused") {
+        mediaRecorder.resume()
+        return false
+    }
+
+    mediaRecorder.pause()
+    return true
+}
+
+let stopResolver: (() => void) | null = null
+export function stopMediaRecorder(): Promise<void> {
+    if (!get(activeRecording) || !mediaRecorder) return Promise.resolve()
+
+    return new Promise((resolve) => {
+        stopResolver = resolve
+        mediaRecorder.stop()
+    })
+}
+
+function handleDataAvailable(e: any) {
+    recordedChunks.push(e.data)
+}
+
+async function handleStop() {
+    newToast("toast.recording_stopped")
+
+    const blob = new Blob(recordedChunks, options)
+    const arraybuffer = await blob.arrayBuffer()
+
+    const name = `LVM Presenter_${formatTime()}.webm`
+    sendMain(Main.RECORDER, { blob: arraybuffer, name })
+
+    currentRecordingStream.set(null)
+    activeRecording.set(null)
+    recordedChunks = []
+    mediaRecorder = null
+
+    if (stopResolver) {
+        stopResolver()
+        stopResolver = null
+    }
+}
+
+function formatTime() {
+    const today = new Date()
+    const s = String(today.getSeconds()).padStart(2, "0")
+    const m = String(today.getMinutes()).padStart(2, "0")
+    const h = String(today.getHours()).padStart(2, "0")
+    const dd = String(today.getDate()).padStart(2, "0")
+    const mm = String(today.getMonth() + 1).padStart(2, "0")
+    const yyyy = today.getFullYear()
+
+    return mm + "-" + dd + "-" + yyyy + "_" + h + "-" + m + "-" + s
+}

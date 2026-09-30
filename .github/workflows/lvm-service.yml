@@ -1,0 +1,26 @@
+name: LVM service import
+on:
+  push:
+    branches: [codex/service-import]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  service:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+      # Install dependencies without running native build scripts.
+      # The contract, unit suite, and production compilation do not use those binaries.
+      - run: npm ci --ignore-scripts
+      - run: npm run test:lvm
+      - run: npm run test:unit
+      - run: npm run prebuild
+      - run: npm run build:frontend:prod
+      - run: npm run build:servers:prod
+      - run: npm run build:electron:prod

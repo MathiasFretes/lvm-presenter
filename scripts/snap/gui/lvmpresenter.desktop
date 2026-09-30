@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=LVM Presenter
+Exec=lvmpresenter %U
+Terminal=false
+Type=Application
+Icon=${SNAP}/meta/gui/icon.png
+StartupWMClass=LVM Presenter
+Comment=Present songs, scriptures and more!
+Categories=AudioVideo;
