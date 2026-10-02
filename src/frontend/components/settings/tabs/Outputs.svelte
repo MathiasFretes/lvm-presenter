@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
     import { BLACKMAGIC, OMT, OUTPUT } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
@@ -28,6 +28,47 @@
 
     let currentOutput: Output | null = null
     $: if ($currentOutputSettings) currentOutput = clone({ id: $currentOutputSettings, ...$outputs[$currentOutputSettings] })
+
+    let lvmNdiStatus: { state: "inactive" | "starting" | "active" | "error"; error: string | null; outputId: string } | null = null
+    let ndiStatusPending = false
+    async function refreshLvmNdiStatus() {
+        if (!currentOutput?.lvmNdi || ndiStatusPending) return
+        ndiStatusPending = true
+        try {
+            lvmNdiStatus = (await requestMain(Main.LVM_NDI_STATUS)) || null
+        } catch {
+            lvmNdiStatus = { state: "error", error: "No se pudo consultar el estado de LVM NDI", outputId: currentOutput?.id || "" }
+        } finally {
+            ndiStatusPending = false
+        }
+    }
+    onMount(() => {
+        void refreshLvmNdiStatus()
+        const timer = setInterval(() => void refreshLvmNdiStatus(), 1000)
+        return () => clearInterval(timer)
+    })
+
+    function toggleLvmNdi(enabled: boolean) {
+        const id = currentOutput?.id
+        if (!id) return
+        if (enabled && Object.entries($outputs).some(([otherId, out]) => otherId !== id && out.lvmNdi)) {
+            newToast("Solo se admite una salida LVM NDI por ahora.")
+            return
+        }
+        updateOutput("lvmNdi", enabled)
+        saved.set(false)
+        if (currentOutput?.enabled) send(OUTPUT, ["LVM_NDI_TOGGLE"], { id, enabled, config: $outputs[id]?.lvmNdiData })
+        void refreshLvmNdiStatus()
+    }
+
+    function updateLvmNdiData(value: string, key: "name" | "fps") {
+        const id = currentOutput?.id
+        if (!id) return
+        const current = $outputs[id]?.lvmNdiData || {}
+        const updated = { ...current, [key]: key === "fps" ? (value === "60" ? 60 : 30) : value.trim() || "LVM Presenter" }
+        updateOutput("lvmNdiData", updated)
+        saved.set(false)
+    }
 
     $: if (currentOutput?.blackmagic) send(BLACKMAGIC, ["GET_DEVICES"])
 
@@ -326,9 +367,9 @@
     $: outputLabel = (currentOutput?.blackmagicData?.displayMode || `${currentOutput?.bounds?.width || 1920}x${currentOutput?.bounds?.height || 1080}`) + (isCropped ? ` - settings.cropped` : "")
 </script>
 
-{#if outputsList.filter((a) => !a.stageOutput).length > 1 || !currentOutput?.enabled || currentOutput?.stageOutput}
+{#if outputsList.filter((a) => !a.stageOutput).length > 1 || !currentOutput?.enabled || currentOutput?.stageOutput || currentOutput?.lvmNdi}
     {@const isStreaming = currentOutput?.webrtcData?.streaming || currentOutput?.rtmpData?.streaming}
-    <MaterialToggleSwitch label="settings.enabled" checked={currentOutput?.enabled} defaultValue={true} disabled={(!currentOutput?.stageOutput && currentOutput?.enabled && activeOutputs.length < 2) || (currentOutput?.enabled && isStreaming)} on:change={(e) => _toggleOutput(e.detail)} />
+    <MaterialToggleSwitch label="settings.enabled" checked={currentOutput?.enabled} defaultValue={true} disabled={(!currentOutput?.lvmNdi && !currentOutput?.stageOutput && currentOutput?.enabled && activeOutputs.length < 2) || (currentOutput?.enabled && isStreaming)} on:change={(e) => _toggleOutput(e.detail)} />
 {/if}
 
 {#if stageId}
@@ -394,6 +435,37 @@
 {#if currentOutput?.ndi}
     <Title label="NDI heredado deshabilitado" icon="ndi" />
     <p>Esta salida requiere migración a LVM NDI. La configuración anterior ya no transmite.</p>
+{/if}
+
+{#if currentOutput && !currentOutput.stageOutput && !currentOutput.ndi}
+    <Title label="LVM NDI" icon="ndi" />
+    <MaterialToggleSwitch label="Enviar video por LVM NDI" checked={!!currentOutput.lvmNdi} on:change={(e) => toggleLvmNdi(e.detail)} />
+    {#if currentOutput.lvmNdi}
+        <InputRow>
+            <MaterialTextInput label="Nombre de fuente" value={currentOutput.lvmNdiData?.name || "LVM Presenter"} disabled={!!currentOutput.enabled} on:change={(e) => updateLvmNdiData(e.detail, "name")} />
+            <MaterialDropdown label="FPS" value={String(currentOutput.lvmNdiData?.fps || 30)} options={[{ value: "30", label: "30 fps" }, { value: "60", label: "60 fps" }]} disabled={!!currentOutput.enabled} on:change={(e) => updateLvmNdiData(e.detail.id, "fps")} />
+        </InputRow>
+        {#if currentOutput.invisible}
+            <MaterialPopupButton label="Resolución de salida" value={outputLabel} name={outputLabel} icon="resize" popupId="change_output_values" />
+        {:else}
+            <p class="hint">La señal usa la resolución de esta ventana de salida.</p>
+        {/if}
+        {#if currentOutput.enabled}
+            <p class="hint">Desactivá la salida para cambiar nombre o FPS.</p>
+        {/if}
+        <p class="ndi-status" role="status">
+            Estado NDI:
+            {#if !currentOutput.enabled}Inactivo
+            {:else if lvmNdiStatus?.outputId && lvmNdiStatus.outputId !== currentOutput.id}Otra salida usa NDI
+            {:else if lvmNdiStatus?.state === "active"}Activo
+            {:else if lvmNdiStatus?.state === "starting"}Iniciando
+            {:else if lvmNdiStatus?.state === "error"}Error
+            {:else}Inactivo{/if}
+        </p>
+        {#if currentOutput.enabled && lvmNdiStatus?.outputId === currentOutput.id && lvmNdiStatus?.state === "error"}
+            <p class="ndi-error" role="alert">{lvmNdiStatus?.error || "No se pudo iniciar LVM NDI"}</p>
+        {/if}
+    {/if}
 {/if}
 
 {#if currentOutput?.omt}
@@ -503,6 +575,8 @@
 {/if}
 
 <style>
+    .ndi-status { padding: 8px 10px; }
+    .ndi-error { padding: 0 10px 10px; color: #ff8080; overflow-wrap: anywhere; }
     .hint {
         padding: 0 10px 10px;
         font-size: 0.8em;

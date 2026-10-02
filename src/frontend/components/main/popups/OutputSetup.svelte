@@ -12,6 +12,7 @@
     ]
 
     const networkTypes = [
+        { id: "lvmNdi", name: "LVM NDI", icon: "ndi", tip: "Video NDI en la red local" },
         { id: "omt", name: "OMT", icon: "omt", tip: "IP" },
         { id: "webrtc", name: "WebRTC", icon: "broadcast", tip: "WHIP, restream.io" },
         { id: "rtmp", name: "RTMP", icon: "broadcast", tip: "YouTube, Twitch, Facebook Live" }

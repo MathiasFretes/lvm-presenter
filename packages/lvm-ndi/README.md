@@ -40,4 +40,8 @@ Build the addon against the official SDK, run the independent 1920×1080 sender 
 
 ## Presenter integration
 
-The isolated M7.8D development integration and its E2E procedure are documented in [Presenter integration](docs/presenter-integration.md). The development flag selects one real Presenter output. This is not yet a product setting or a release of NDI output in Presenter.
+The isolated M7.8D integration and its E2E procedure are documented in [Presenter integration](docs/presenter-integration.md). Presenter now exposes LVM NDI in Outputs: choose an NDI output or enable it on an existing output, set the source name and 30/60 fps, then read the live state and error in Settings. Only one LVM NDI source can run at a time. This output sends video only; a dedicated invisible NDI output is excluded from local audio routing. The development flag remains for isolated scripts.
+
+For Windows packaging, build the addon with `ndi:build` before `electron-builder`. The packaging config includes the public package entry point and unpacks `lvm_ndi.node`. The official NDI runtime must be installed on the target machine; this repository does not bundle or redistribute its DLL. A build without the addon leaves NDI unavailable and reports that state in the Presenter UI. Release validation must inspect the packaged app and its runtime behavior before calling NDI distribution ready.
+
+An unsigned `win-unpacked` package was assembled locally for M7.8E. Its ASAR contains `packages/lvm-ndi/src/index.mjs`, the native addon resides under `app.asar.unpacked`, and neither `.ndi-cache` nor the NDI runtime DLL is inside the package. A signed installer and end-user runtime installation remain separate release checks.

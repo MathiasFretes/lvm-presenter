@@ -2,6 +2,7 @@ import type { BrowserWindow, Display, NativeImage, Size } from "electron"
 import electron from "electron"
 import { OmtSender } from "../omt/OmtSender"
 import { OutputHelper } from "../output/OutputHelper"
+import { LvmNdiBridge } from "../output/LvmNdiBridge"
 import type { CaptureOptions } from "./CaptureOptions"
 import { CaptureLifecycle } from "./helpers/CaptureLifecycle"
 import { CaptureTransmitter } from "./helpers/CaptureTransmitter"
@@ -24,7 +25,7 @@ export class CaptureHelper {
         const screen: Display = this.getWindowScreen(window)
 
         const defaultFramerates = {
-            lvmNdi: process.env.LVM_NDI_FPS === "60" ? 60 : 30,
+            lvmNdi: LvmNdiBridge.framerate(id),
             ndi: this.framerates.connected,
             omt: this.framerates.connected,
             blackmagic: this.framerates.unconnected,

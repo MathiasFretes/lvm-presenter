@@ -11,6 +11,8 @@ files:
     - build/electron/**
     - build/types/**
     - public/**
+    - packages/lvm-ndi/src/**
+    - packages/lvm-ndi/build/Release/lvm_ndi.node
     - "!node_modules/@napi-rs"
     - "!**/node_modules/*/{CHANGELOG*,README*,test*,example*,docs}"
     - "!**/node_modules/*/{*.d.ts,*.ts,*.map}"
@@ -27,6 +29,7 @@ win:
     files:
         - "!**/node_modules/openmediatransport/lib/{macos,linux-*,win-arm64}/**"
     asarUnpack:
+        - "**/packages/lvm-ndi/build/Release/lvm_ndi.node"
         - "**/node_modules/libspotifyctl/**/*"
         - "**/node_modules/openmediatransport/**"
         - "**/node_modules/sherpa-onnx-*/**"
