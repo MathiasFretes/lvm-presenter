@@ -3,6 +3,7 @@
     import { translateText } from "../../../utils/language"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
+    import Link from "../../inputs/Link.svelte"
     import { registerPopupSubmit } from "../../../utils/popup"
 
     registerPopupSubmit(confirm)
@@ -37,6 +38,7 @@
     <div class="section">
         <p class="title">{translateText("settings.network_output")}</p>
         <MaterialMultiChoice options={networkTypes} value={networkType} on:click={(e) => (networkType = e.detail)} highlightFirst={false} canDeselect />
+        <p class="ndi-info">NDI®: <Link url="https://ndi.video/">información y herramientas oficiales</Link></p>
     </div>
 </div>
 
@@ -61,4 +63,5 @@
         opacity: 0.7;
         font-size: 0.9em;
     }
+    .ndi-info { font-size: 0.8em; opacity: 0.8; }
 </style>

@@ -1,4 +1,5 @@
 import path from "path"
+import { existsSync } from "fs"
 
 export type NdiOutputState = "inactive" | "starting" | "active" | "error"
 export type NdiFrame = { data: Uint8Array; width: number; height: number; stride: number }
@@ -11,9 +12,11 @@ type Sender = {
 }
 
 function createSender(): Sender {
-    // Both src/electron/output and build/electron/output are three levels below the repo root.
-    // This is the public package entry point; Presenter never loads the native addon directly.
-    const entry = path.resolve(__dirname, "../../../packages/lvm-ndi/src/index.mjs")
+    // Release packages stage only the public API and addon as resources; development loads the source package.
+    // Presenter never loads the native addon directly.
+    const resources = process.resourcesPath
+    const packaged = resources && existsSync(path.join(resources, "app.asar"))
+    const entry = packaged ? path.join(resources, "lvm-ndi/src/index.mjs") : path.resolve(__dirname, "../../../packages/lvm-ndi/src/index.mjs")
     const { NdiSender } = require(entry)
     return new NdiSender()
 }

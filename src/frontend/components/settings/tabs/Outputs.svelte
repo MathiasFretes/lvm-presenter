@@ -19,6 +19,7 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import Link from "../../inputs/Link.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
@@ -441,6 +442,7 @@
     <Title label="LVM NDI" icon="ndi" />
     <MaterialToggleSwitch label="Enviar video por LVM NDI" checked={!!currentOutput.lvmNdi} on:change={(e) => toggleLvmNdi(e.detail)} />
     {#if currentOutput.lvmNdi}
+        <p class="hint">NDI® requiere el <Link url="https://ndi.link/NDIRedistV6">runtime oficial</Link> en este equipo. <Link url="https://ndi.video/">Información de NDI</Link>.</p>
         <InputRow>
             <MaterialTextInput label="Nombre de fuente" value={currentOutput.lvmNdiData?.name || "LVM Presenter"} disabled={!!currentOutput.enabled} on:change={(e) => updateLvmNdiData(e.detail, "name")} />
             <MaterialDropdown label="FPS" value={String(currentOutput.lvmNdiData?.fps || 30)} options={[{ value: "30", label: "30 fps" }, { value: "60", label: "60 fps" }]} disabled={!!currentOutput.enabled} on:change={(e) => updateLvmNdiData(e.detail.id, "fps")} />

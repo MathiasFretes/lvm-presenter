@@ -79,6 +79,7 @@
     </div>
 
     <div style="text-align: center;font-size: 0.7em;opacity: 0.5;margin-top: 12px;"><T id="about.made" /> Kristoffer Vassbø (2021)</div>
+    <div style="text-align: center;font-size: 0.7em;opacity: 0.7;margin-top: 8px;">NDI® is a registered trademark of Vizrt NDI AB.</div>
 </div>
 
 <style>

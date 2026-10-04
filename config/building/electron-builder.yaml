@@ -11,8 +11,7 @@ files:
     - build/electron/**
     - build/types/**
     - public/**
-    - packages/lvm-ndi/src/**
-    - packages/lvm-ndi/build/Release/lvm_ndi.node
+    - "!packages/lvm-ndi${/*}"
     - "!node_modules/@napi-rs"
     - "!**/node_modules/*/{CHANGELOG*,README*,test*,example*,docs}"
     - "!**/node_modules/*/{*.d.ts,*.ts,*.map}"
@@ -26,10 +25,12 @@ files:
 win:
     target: NSIS
     icon: build/public/icon.png
-    files:
-        - "!**/node_modules/openmediatransport/lib/{macos,linux-*,win-arm64}/**"
+    extraResources:
+        - from: packages/lvm-ndi/src/index.mjs
+          to: lvm-ndi/src/index.mjs
+        - from: packages/lvm-ndi/build/Release/lvm_ndi.node
+          to: lvm-ndi/build/Release/lvm_ndi.node
     asarUnpack:
-        - "**/packages/lvm-ndi/build/Release/lvm_ndi.node"
         - "**/node_modules/libspotifyctl/**/*"
         - "**/node_modules/openmediatransport/**"
         - "**/node_modules/sherpa-onnx-*/**"
