@@ -55,3 +55,17 @@ La prueba corta `node scripts/lvm/ndi-release-smoke.mjs <ruta-al-ejecutable> [di
 - Firma: no se configuró certificado de firma en este entorno. Una build pública debe firmarse y verificarse antes de publicarse.
 
 M7.8F permanece abierto hasta resolver el instalador, repetir los casos en una instalación limpia y completar la verificación de firma. `main` y los releases publicados no se modifican desde esta rama.
+
+## Auditoría de la identidad QA y del uninstall (6 de octubre de 2026)
+
+El paquete QA se construyó con `appId: app.lvmpresenter.m78fqa`, `productName: LVM Presenter M78F QA` y artefacto `LVM-Presenter-M78F-QA-1.6.6-beta.3-x64.exe`. `electron-builder` 26.16.1 usa NSIS `oneClick=true` y `perMachine=false` por defecto. Deriva el GUID `127a1745-dba5-52aa-bd26-d616509ff4d9` con UUID v5 a partir del `appId`. Las dos claves residuales usan exactamente ese GUID; no hay evidencia de un desajuste de identidad.
+
+| Momento | `HKCU\Software\127a1745-dba5-52aa-bd26-d616509ff4d9` | `HKCU\Software\Microsoft\Windows\CurrentVersion\Uninstall\127a1745-dba5-52aa-bd26-d616509ff4d9` | Carpeta instalada |
+| --- | --- | --- | --- |
+| Antes de la instalación interactiva | No se capturó una línea base limpia; había intentos QA anteriores | No se capturó una línea base limpia | No confirmada |
+| Después de instalar | `InstallLocation=C:\Users\mathi\AppData\Local\Programs\@lavozmisionerapresenter`; `ShortcutName=LVM Presenter M78F QA` | `DisplayName=LVM Presenter M78F QA 1.6.6-beta.3`; `DisplayVersion=1.6.6-beta.3`; `Publisher=LVM Service`; `UninstallString` apunta al desinstalador QA con `/currentuser`; `QuietUninstallString` agrega `/S` | Presente |
+| Después de desinstalar interactivamente | Permanece con los mismos valores | Permanece con los mismos valores | Ausente |
+
+La plantilla NSIS instalada en `app-builder-lib` escribe ambas claves con `SHELL_CONTEXT` y contiene `DeleteRegKey SHELL_CONTEXT` para las dos rutas al final de `uninstaller.nsh`. La cuenta actual es propietaria de ambas y tiene `FullControl`. El usuario indicó que, tras aceptar la desinstalación, la ventana se cerró sin mensaje. La carpeta y el shortcut se eliminaron, pero las claves no. No se puede afirmar aún si la ejecución no llegó a `DeleteRegKey` o si la operación falló; se necesita una traza del desinstalador. No se deben borrar manualmente las claves para hacer pasar el gate.
+
+Se preparó una build diagnóstica temporal con un `appId` y nombre de paquete diferentes para no reutilizar la instalación QA ni una instalación normal. Falló antes de crear el instalador porque C: tenía aproximadamente 50 MB libres y 7-Zip devolvió `Espacio en disco insuficiente`. Su salida temporal `node_modules/.cache/m78f-qa2-dist` ocupa aproximadamente 685 MB; la revisión automática rechazó borrarla. No se modificó código productivo ni se instaló la variante diagnóstica.
