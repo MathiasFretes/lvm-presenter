@@ -78,3 +78,28 @@ Tras liberar espacio en C:, se completaron dos instalaciones diagnósticas adici
 QA2 y QA3 se instalaron y desinstalaron interactivamente. Las claves residuales tienen propietario `LAPTOP-62TAOCAS\mathi` y `FullControl` para esa cuenta; existen tanto al consultarlas con `/reg:32` como con `/reg:64`. La traza NSIS en ambas variantes confirma `SECTION_BEGIN mode=CurrentUser` y la ruta de instalación correcta, pero una lectura de `InstallLocation` mediante `ReadRegStr HKCU "${INSTALL_REGISTRY_KEY}"` dentro de `customUnInstall` devolvió vacío. Esto requiere investigar la expansión/contexto de esa macro: la traza no prueba por sí sola que la instrucción final `DeleteRegKey` se haya ejecutado o que haya fallado. Las marcas de última escritura de las claves corresponden a las instalaciones, no a una recreación posterior. Minutos después de las desinstalaciones, las claves seguían presentes y no había procesos QA ni NSIS activos.
 
 La primera compilación de QA2 falló por falta de espacio y dejó una salida temporal ignorada en `node_modules/.cache/m78f-qa2-dist`. La revisión automática rechazó borrarla; no se eludió el bloqueo. Después de liberar espacio, las compilaciones de QA2 y QA3 terminaron correctamente. Los instaladores y sus salidas diagnósticas permanecen fuera de Git. **M7.8F sigue bloqueado por el registro**; cambiar `oneClick` no lo resuelve. No se agregará una eliminación de claves especulativa al instalador productivo.
+
+## Traza precisa del bloque `DeleteRegKey` (QA4)
+
+Se compiló **una sola** instalación adicional, `app.lvmpresenter.m78fqa4`, con una copia temporal instrumentada de la plantilla `uninstaller.nsh` de `app-builder-lib` 26.16.1. La plantilla original se restauró después de compilar (hash SHA-256 idéntico); la instrumentación y el paquete QA4 quedaron en `node_modules/.cache`, fuera de Git. Antes de instalar, no existían las claves del GUID `392eb5ab-95fc-5cb1-9203-c8608d0704fd` ni la carpeta QA4. El usuario completó la desinstalación interactiva. El log temporal `lvm-m78f-qa4-uninstall.log` mostró:
+
+```text
+UNINSTALL_START
+USER=mathi; MODE=CurrentUser; GUID=392eb5ab-95fc-5cb1-9203-c8608d0704fd
+APP_KEY=Software\392eb5ab-95fc-5cb1-9203-c8608d0704fd
+UNINSTALL_KEY=Software\Microsoft\Windows\CurrentVersion\Uninstall\392eb5ab-95fc-5cb1-9203-c8608d0704fd
+SHCTX_READ_APP error=1
+HKCU_32_READ_APP error=1
+HKCU_64_READ_APP error=1
+BEFORE_DELETE_UNINSTALL read_error=1
+AFTER_DELETE_UNINSTALL delete_error=1
+CHECK_UNINSTALL read_error=1
+BEFORE_DELETE_APP read_error=1
+AFTER_DELETE_APP delete_error=1
+CHECK_APP read_error=1
+UNINSTALL_END
+```
+
+Cada lectura y eliminación tuvo `ClearErrors` inmediatamente antes y comprobación de `${Errors}` inmediatamente después. Se conservó el orden original de electron-builder: primero la clave `Uninstall`, después la clave de la app. **El flujo sí llega a ambos `DeleteRegKey`; ambos señalan error.** La carpeta y el shortcut QA4 se eliminaron, pero las dos claves permanecieron. No hubo procesos QA4 activos al terminar.
+
+Una lectura posterior desde PowerShell confirmó que ambas claves están en `HKCU` y en `HKEY_USERS\<SID de mathi>`, visibles en las vistas `/reg:32` y `/reg:64`. El SID de la cuenta actual es propietario y tiene `FullControl` en ambas claves. Por tanto, el error está acotado a cómo el proceso NSIS accede a esas claves o a cómo interpreta su contexto, no a una salida prematura antes del bloque de limpieza. El log indica el nombre de usuario y el perfil, pero **no registra el SID del token del proceso NSIS**; no se debe afirmar todavía cuál es la causa final. No se implementó workaround, no se eliminaron claves manualmente y no se hicieron más instalaciones QA.
