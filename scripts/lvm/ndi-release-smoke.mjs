@@ -90,7 +90,14 @@ async function runCase(label, runtime, expectedState) {
       await OutputHelper.Lifecycle.removeOutput(outputId)
     }, id), 'output removal')
     if ((await withTimeout(ndiState(app), 'final state')).state !== 'inactive') throw new Error(`${label}: sender remained active after output removal`)
-    void app.evaluate(({ app: electronApp }) => electronApp.quit()).catch(() => {})
+    // Use the same confirmed Exit path as the Presenter UI. app.quit() alone
+    // is vetoed by the main window and leaves the packaged process running.
+    void app.evaluate(() => {
+      const path = process.getBuiltinModule('node:path')
+      const entry = path.join(process.resourcesPath, 'app.asar/build/electron/index.js')
+      const require = process.getBuiltinModule('node:module').createRequire(entry)
+      void require(path.join(process.resourcesPath, 'app.asar/build/electron/utils/close.js')).exitApp()
+    }).catch(() => {})
     for (let attempt = 0; attempt < 40 && alive(pid); attempt++) await delay(250)
     if (alive(pid)) throw new Error(`${label}: Presenter process survived shutdown`)
     await Promise.race([app.close().catch(() => {}), delay(5000)])
