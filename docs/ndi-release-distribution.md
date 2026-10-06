@@ -103,3 +103,25 @@ UNINSTALL_END
 Cada lectura y eliminación tuvo `ClearErrors` inmediatamente antes y comprobación de `${Errors}` inmediatamente después. Se conservó el orden original de electron-builder: primero la clave `Uninstall`, después la clave de la app. **El flujo sí llega a ambos `DeleteRegKey`; ambos señalan error.** La carpeta y el shortcut QA4 se eliminaron, pero las dos claves permanecieron. No hubo procesos QA4 activos al terminar.
 
 Una lectura posterior desde PowerShell confirmó que ambas claves están en `HKCU` y en `HKEY_USERS\<SID de mathi>`, visibles en las vistas `/reg:32` y `/reg:64`. El SID de la cuenta actual es propietario y tiene `FullControl` en ambas claves. Por tanto, el error está acotado a cómo el proceso NSIS accede a esas claves o a cómo interpreta su contexto, no a una salida prematura antes del bloque de limpieza. El log indica el nombre de usuario y el perfil, pero **no registra el SID del token del proceso NSIS**; no se debe afirmar todavía cuál es la causa final. No se implementó workaround, no se eliminaron claves manualmente y no se hicieron más instalaciones QA.
+
+## Diagnóstico de contexto HKCU (QA5, 6 de octubre de 2026)
+
+`config/building/diagnostics/m78f-uninstall-context.nsh` contiene una inclusión **solo para QA**. `config/building/diagnostics/m78f-uninstaller-context.patch` inserta su llamada antes de `initMultiUser` en la plantilla NSIS de `app-builder-lib` 26.16.1. El parche pasó `git apply --check`, se aplicó únicamente al compilar QA5 y la plantilla original se restauró al terminar (hash SHA-256 idéntico). La configuración productiva no referencia estos archivos. QA5 se compiló sin firma con una identidad y carpeta distintas de las instalaciones anteriores; el paquete y la configuración temporal quedaron fuera de Git.
+
+Antes de instalar se verificó que no existían la identidad QA5, su carpeta ni el marcador. El usuario completó una instalación y una desinstalación interactivas. Antes de cualquier lectura de `InstallLocation` por `initMultiUser`, el desinstalador registró en `%TEMP%\lvm-m78f-qa5-context.log` el usuario, tipo de cuenta, elevación, perfil, TEMP, APPDATA, LOCALAPPDATA, GUID y ruta instalada. Escribió `marker=QA5` en `HKCU\Software\LVM-M78F-Diagnostic`; después de `initMultiUser`, leyó el marcador mediante `SHELL_CONTEXT`.
+
+```text
+env_username=mathi userinfo_name=mathi account_type=User elevated_admin=no
+profile=C:\Users\mathi
+temp=C:\Users\mathi\AppData\Local\Temp
+appdata=C:\Users\mathi\AppData\Roaming
+localappdata=C:\Users\mathi\AppData\Local
+marker_write_error=0
+AFTER_INIT_MULTI_USER install_mode=CurrentUser
+shell_context_marker=QA5 shell_context_read_error=0
+UNINSTALL_INIT_END
+```
+
+La enumeración general de `HKEY_USERS` fue denegada por Windows, pero la consulta directa de `HKEY_USERS\<SID de mathi>\Software\LVM-M78F-Diagnostic` encontró el mismo marcador `QA5` que `HKCU`. **El HKCU del desinstalador corresponde al SID del usuario que instaló Presenter.** Esto descarta la hipótesis principal de un perfil de usuario distinto. QA5 eliminó carpeta y accesos directos y no dejó procesos, pero sus dos claves de instalación siguen presentes. El marcador y todas las claves QA se conservaron como evidencia; no se borró ninguna.
+
+QA4 ya había demostrado que las lecturas y los dos `DeleteRegKey` de esas rutas devuelven error desde NSIS, incluso probando las vistas 32 y 64. QA5 demuestra que el mismo proceso sí puede escribir y leer otra clave en HKCU. La causa específica del rechazo de las claves de instalación **sigue sin identificarse**. De acuerdo con el gate de esta investigación, **M7.8F queda abierto y en pausa**. No se harán más variantes QA ni workarounds de borrado hasta contar con evidencia nueva; el resto del roadmap puede avanzar sin fusionar esta rama a `main`.
