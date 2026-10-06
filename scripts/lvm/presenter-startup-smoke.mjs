@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs'
 import { mkdir, mkdtemp, rm } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { setTimeout as delay } from 'node:timers/promises'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const profileRoot = path.join(root, 'node_modules', '.cache')
@@ -17,6 +18,19 @@ let app
 let pid
 const alive = (id) => {
   try { process.kill(id, 0); return true } catch { return false }
+}
+async function withTimeout(promise, label, ms = 30000) {
+  const controller = new AbortController()
+  try {
+    return await Promise.race([
+      promise,
+      delay(ms, undefined, { signal: controller.signal }).then(() => {
+        throw new Error(`${label} timed out after ${ms} ms`)
+      })
+    ])
+  } finally {
+    controller.abort()
+  }
 }
 
 try {
@@ -34,19 +48,28 @@ try {
       LVM_NDI_OUTPUT_ID: ''
     }
   })
-  pid = await app.evaluate(() => process.pid)
-  const window = await app.firstWindow()
-  await window.waitForLoadState('domcontentloaded')
-  if (!(await window.title()).includes('LVM Presenter')) throw new Error('Presenter window did not load')
-  await app.evaluate(({ app: electronApp }) => electronApp.quit())
-  await app.close()
+  pid = await withTimeout(app.evaluate(() => process.pid), 'Electron PID')
+  const window = await withTimeout(app.firstWindow(), 'Presenter window')
+  await withTimeout(window.waitForLoadState('domcontentloaded'), 'Presenter document')
+  if (!(await withTimeout(window.title(), 'Presenter title')).includes('LVM Presenter'))
+    throw new Error('Presenter window did not load')
+  // The main window intentionally vetoes app.quit() until the UI has handled
+  // unsaved work. Use the same cleanup entry point as the UI's confirmed Exit.
+  // Exiting destroys the Playwright connection, so observe the process instead.
+  void app.evaluate(() => {
+    const path = process.getBuiltinModule('node:path')
+    const require = process.getBuiltinModule('node:module').createRequire(path.join(process.cwd(), 'build/electron/index.js'))
+    void require(path.join(process.cwd(), 'build/electron/utils/close.js')).exitApp()
+  }).catch(() => {})
+  for (let attempt = 0; attempt < 60 && alive(pid); attempt++) await delay(250)
   if (alive(pid)) throw new Error(`Electron process ${pid} survived shutdown`)
+  await Promise.race([app.close().catch(() => {}), delay(5000)])
   console.log('Presenter startup and shutdown: PASS')
 } finally {
   if (pid && alive(pid) && process.platform === 'win32') {
     try { execFileSync('taskkill.exe', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' }) } catch {}
   }
-  if (app) await app.close().catch(() => {})
+  if (app) await Promise.race([app.close().catch(() => {}), delay(5000)])
   const resolved = path.resolve(profile)
   if (!resolved.startsWith(path.resolve(profileRoot) + path.sep))
     throw new Error(`Refusing to remove unexpected profile: ${resolved}`)
