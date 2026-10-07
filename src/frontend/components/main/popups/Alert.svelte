@@ -25,7 +25,7 @@
         <Loader />
     </div>
 {:else}
-    <p on:click={click}>
+    <p>
         {#key msg}
             {#if msg.includes("captions#")}
                 {translateText("captions.info")}
