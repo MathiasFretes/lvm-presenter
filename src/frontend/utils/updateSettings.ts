@@ -331,6 +331,9 @@ const updateList: { [key in SaveListSettings | SaveListSyncedSettings]: any } = 
             delete v[id].out
             if (v[id].webrtcData?.streaming) v[id].webrtcData.streaming = false
             if (v[id].rtmpData?.streaming) v[id].rtmpData.streaming = false
+            // The former default output used magenta. Migrate only that
+            // generated output; user-defined output colors remain untouched.
+            if (id === "default" && v[id].color?.toLowerCase() === "#f0008c") v[id].color = "#C6A15B"
         })
         migrateOutputsRtmp(v)
         outputs.set(v)
