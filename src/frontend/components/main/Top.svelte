@@ -99,12 +99,10 @@
         {#if !$saved && $os.platform !== "win32"}
             <div class="unsaved" />
         {/if}
-        <!-- logo -->
-        <h1 style="align-self: center;width: 100%;padding: 0px 10px;text-align: center;font-size: 1.8em;">LVM Presenter</h1>
-        <!-- <div class="logo">
-            <img style="height: 35px;" src="./import-logos/lvmpresenter.webp" alt="LVM Presenter-logo" draggable={false} />
-            <h1 style="color: var(--text);font-size: 1.7em;">LVM Presenter</h1>
-        </div> -->
+        <div class="lvm-brand">
+            <span class="lvm-brand-mark" aria-hidden="true">LVM</span>
+            <h1>Presenter</h1>
+        </div>
     </span>
     <span>
         <TopButton id="show" />
@@ -158,6 +156,31 @@
 </div>
 
 <style>
+    .lvm-brand {
+        display: flex;
+        align-items: center;
+        gap: var(--lvm-space-3);
+        width: 100%;
+        padding: 0 10px;
+    }
+    .lvm-brand-mark {
+        display: grid;
+        place-items: center;
+        flex: 0 0 32px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--lvm-brand-gold);
+        color: var(--lvm-brand-navy);
+        font-size: 10px;
+        font-weight: 800;
+    }
+    .lvm-brand h1 {
+        margin: 0;
+        color: var(--text);
+        font-size: 1.1em;
+        font-weight: 700;
+    }
     .top {
         position: relative;
         display: flex;
