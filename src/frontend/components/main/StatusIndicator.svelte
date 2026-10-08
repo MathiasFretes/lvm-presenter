@@ -115,6 +115,14 @@
         .status { left: 0; }
     }
 
+    @media (prefers-reduced-motion: reduce) {
+        .status,
+        .status :global(*) {
+            animation-duration: 0.01ms !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+
     .marker {
         position: absolute;
         bottom: 1px;

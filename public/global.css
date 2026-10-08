@@ -94,12 +94,6 @@ body {
     height: 100%;
 }
 
-@media (prefers-reduced-motion: reduce) {
-    body {
-        transition: none;
-    }
-}
-
 body {
     display: flex;
     flex-direction: column;
@@ -107,7 +101,7 @@ body {
     box-sizing: border-box;
     /* gradient color background transition not easily possible */
     /* https://stackoverflow.com/questions/6542212/use-css3-transitions-with-gradient-backgrounds */
-    transition: background-color 0.5s;
+    transition: background-color var(--lvm-motion-normal);
 
     font-family: var(--font-family);
     font-size: var(--font-size);
@@ -152,7 +146,7 @@ h4,
 h5,
 h6 {
     color: var(--secondary);
-    transition: color 0.5s;
+    transition: color var(--lvm-motion-normal);
 
     text-overflow: ellipsis;
     overflow: hidden;
@@ -162,6 +156,18 @@ h6 {
 
 h1 {
     font-weight: bold;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6 {
+        transition: none;
+    }
 }
 
 p {
