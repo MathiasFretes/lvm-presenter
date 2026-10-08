@@ -267,7 +267,7 @@ export async function loadWindowContent(window: BrowserWindow, type: null | "out
     if (isProd) window.loadFile("public/index.html").catch(loadingFailed)
     else {
         // load development environment
-        if (mainOutput) openDevTools(window)
+        if (mainOutput && process.env.LVM_OPEN_DEVTOOLS === "1") openDevTools(window)
         window.loadURL("http://localhost:3000").catch(loadingFailed)
     }
 
