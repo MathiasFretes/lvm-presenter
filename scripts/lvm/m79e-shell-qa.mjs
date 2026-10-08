@@ -52,7 +52,7 @@ try {
     await setup.click()
     await window.locator('.popup').waitFor({ state: 'hidden', timeout: 10000 })
     const guide = window.locator('#guideButtons')
-    if (await guide.count()) {
+    if (await guide.waitFor({ state: 'visible', timeout: 5000 }).then(() => true, () => false)) {
       await guide.locator('button').first().click()
       await guide.waitFor({ state: 'hidden', timeout: 10000 })
     }
@@ -65,6 +65,14 @@ try {
   })
   await window.screenshot({ path: screenshot })
   console.log(`Presenter shell: native menu hidden; browser locale ${locale}; brand ${JSON.stringify(brand)}; screenshot ${screenshot}`)
+  await window.setViewportSize({ width: 1024, height: 768 })
+  const compact = await window.evaluate(() => ({
+    viewport: document.documentElement.clientWidth,
+    content: document.documentElement.scrollWidth,
+  }))
+  const compactScreenshot = path.join(root, 'docs', 'screenshots', 'm79e-presenter-1024.png')
+  await window.screenshot({ path: compactScreenshot })
+  console.log(`Presenter 1024 px: ${JSON.stringify(compact)}; screenshot ${compactScreenshot}`)
 } finally {
   if (app) {
     void app.evaluate(() => {
