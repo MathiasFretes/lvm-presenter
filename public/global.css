@@ -186,6 +186,15 @@ h1 {
 }
 
 @media (prefers-reduced-motion: reduce) {
+    /* Keep projected output timing separate from the operator interface. */
+    main:not(.background),
+    main:not(.background) *,
+    main:not(.background) *::before,
+    main:not(.background) *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+    }
     body,
     h1,
     h2,
