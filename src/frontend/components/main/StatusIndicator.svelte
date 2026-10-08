@@ -90,7 +90,7 @@
     .status {
         position: absolute;
         top: 0;
-        left: 0;
+        left: var(--navigation-width);
 
         width: 40px;
         padding-right: 2px;
@@ -109,6 +109,10 @@
         justify-content: center;
 
         z-index: 5000;
+    }
+
+    @media screen and (max-width: 750px) {
+        .status { left: 0; }
     }
 
     .marker {

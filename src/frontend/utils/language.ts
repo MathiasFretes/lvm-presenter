@@ -7,7 +7,7 @@ import { sortByName } from "../components/helpers/array"
 import { sendMain } from "../IPC/main"
 import { dictionary, language, localeDirection } from "../stores"
 import { isMainWindow } from "./common"
-import { languageFlags, languages, replace } from "./languageData"
+import { languageFlags, languages, replace, resolveBrowserLocale } from "./languageData"
 import { send } from "./request"
 
 // https://medium.com/i18n-and-l10n-resources-for-developers/a-step-by-step-guide-to-svelte-localization-with-svelte-i18n-v3-2c3ff0d645b8
@@ -25,10 +25,7 @@ function setLanguage(locale = "", init = false) {
     if (!locale) {
         // locale = getLocaleFromHostname(/^(.*?)\./) || getLocaleFromPathname(/^\/(.*?)\//) || getLocaleFromNavigator() || getLocaleFromHash('lang') || 'en';
         // locale = window.navigator.userLanguage || window.navigator.language || 'en';
-        locale = window.navigator.language
-        Object.keys(replace).forEach((key) => {
-            if (replace[key].includes(locale)) locale = key
-        })
+        locale = resolveBrowserLocale(window.navigator.language)
     }
 
     if (!replace[locale]) locale = "en"

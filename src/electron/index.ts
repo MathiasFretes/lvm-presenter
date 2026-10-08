@@ -208,7 +208,9 @@ function createMain() {
         width: getWindowBounds("width"),
         height: getWindowBounds("height"),
         frame: !isProd || !isWindows,
-        autoHideMenuBar: isProd && isWindows
+        // The renderer already provides the app menu. Keep native accelerators
+        // available with Alt without showing a second menu bar on Windows.
+        autoHideMenuBar: isWindows
     }
 
     // should be centered to screen if x & y is not set (or bottom left on mac)

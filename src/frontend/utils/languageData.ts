@@ -71,6 +71,14 @@ export const replace = {
     id_ID: ["id-ID", "id"]
 }
 
+export function resolveBrowserLocale(browserLocale: string): string {
+    const exact = Object.entries(replace).find(([, aliases]) => aliases.includes(browserLocale))
+    if (exact) return exact[0]
+    // Spanish has many regional browser tags; all use the same UI dictionary.
+    if (/^es[-_]/i.test(browserLocale)) return "es"
+    return "en"
+}
+
 export const languageFlags = {
     en: "🇺🇸",
     en_GB: "🇬🇧",
