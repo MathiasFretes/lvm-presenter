@@ -170,7 +170,8 @@ export function updateSettings(data: any) {
         // update colors (pre 0.9.2 or 1.4.9)
         const pre092 = currentTheme.colors.secondary?.toLowerCase() === "#e6349c"
         const pre149 = currentTheme.colors.primary?.toLowerCase() === "#292c36"
-        if (data.theme === "default" && (pre092 || pre149)) {
+        const oldPresenterDefault = currentTheme.colors.secondary?.toLowerCase() === "#f0008c" && currentTheme.colors.primary?.toLowerCase() === "#242832"
+        if (data.theme === "default" && (pre092 || pre149 || oldPresenterDefault)) {
             themes.update((a) => {
                 a.default = clone(defaultThemes.default)
                 currentTheme = a.default

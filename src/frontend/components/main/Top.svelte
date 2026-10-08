@@ -100,8 +100,8 @@
             <div class="unsaved" />
         {/if}
         <div class="lvm-brand">
-            <span class="lvm-brand-mark" aria-hidden="true">LVM</span>
-            <h1>Presenter</h1>
+            <span class="lvm-brand-mark" aria-hidden="true"><span class="lvm-brand-cross"></span></span>
+            <h1><span class="lvm-brand-name">La Voz <strong>Misionera</strong></span><span class="lvm-brand-product">Presenter</span></h1>
         </div>
     </span>
     <span>
@@ -172,15 +172,38 @@
         border-radius: 50%;
         background: var(--lvm-brand-gold);
         color: var(--lvm-brand-navy);
-        font-size: 10px;
-        font-weight: 800;
+        position: relative;
+    }
+    .lvm-brand-cross::before,
+    .lvm-brand-cross::after {
+        content: "";
+        position: absolute;
+        background: var(--lvm-brand-navy);
+        border-radius: 1px;
+    }
+    .lvm-brand-cross::before {
+        width: 3px;
+        height: 19px;
+        top: 7px;
+        left: 14px;
+    }
+    .lvm-brand-cross::after {
+        width: 13px;
+        height: 3px;
+        top: 12px;
+        left: 9px;
     }
     .lvm-brand h1 {
         margin: 0;
         color: var(--text);
-        font-size: 1.1em;
+        display: flex;
+        flex-direction: column;
+        line-height: 1.05;
+        font-size: 0.74em;
         font-weight: 700;
     }
+    .lvm-brand-name strong { color: var(--lvm-brand-gold); }
+    .lvm-brand-product { margin-top: 2px; color: var(--text); font-size: 0.9em; font-weight: 500; }
     .top {
         position: relative;
         display: flex;
