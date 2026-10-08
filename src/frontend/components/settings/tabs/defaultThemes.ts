@@ -15,7 +15,7 @@ export const defaultThemes: { [key: string]: Themes } = {
             "primary-darkest": "#101b27",
             text: "#ffffff",
             textInvert: "#131313",
-            "secondary-text": "#ffffff",
+            "secondary-text": "#1c2a39",
             secondary: "#C6A15B",
             "secondary-opacity": "rgba(198, 161, 91, 0.35)",
             hover: "rgb(255 255 255 / 0.05)",
