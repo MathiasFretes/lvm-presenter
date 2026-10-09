@@ -139,10 +139,14 @@ export const mainResponses: MainResponses = {
     [Main.EVENTS]: (a) => events.set(a),
     [Main.MEDIA]: (a) => media.set(a),
     [Main.THEMES]: (a) => {
-        themes.set(Object.keys(a).length ? a : clone(defaultThemes))
+        const loadedThemes = Object.keys(a).length ? a : clone(defaultThemes)
+        const oldDefault = loadedThemes.default?.colors?.secondary?.toLowerCase() === "#f0008c" && loadedThemes.default?.colors?.primary?.toLowerCase() === "#242832"
+        if (oldDefault) loadedThemes.default = clone(defaultThemes.default)
+        themes.set(loadedThemes)
 
-        // update if themes are loaded after settings
-        if (get(theme) !== "default") updateThemeValues(get(themes)[get(theme)])
+        // Theme data can arrive after Settings. Apply default as well so the
+        // restored UI never falls back to the old magenta CSS variables.
+        updateThemeValues(loadedThemes[get(theme)] || loadedThemes.default)
     },
     [Main.DRIVE_API_KEY]: (a) => driveKeys.set(a),
     [Main.HISTORY]: (a) => {

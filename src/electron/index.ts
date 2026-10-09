@@ -3,7 +3,7 @@
 
 import type { Rectangle } from "electron"
 import { BrowserWindow, Menu, app, ipcMain, powerSaveBlocker, protocol, screen } from "electron"
-import { AUDIO, BLACKMAGIC, CLOUD, EXPORT, MAIN, NDI, OMT, OUTPUT, STARTUP } from "../types/Channels"
+import { AUDIO, BLACKMAGIC, CLOUD, EXPORT, MAIN, OMT, OUTPUT, STARTUP } from "../types/Channels"
 import { Main } from "../types/IPC/Main"
 import { ToMain } from "../types/IPC/ToMain"
 import type { Dictionary } from "../types/Settings"
@@ -15,7 +15,6 @@ import { cleanupProtectedCache, registerProtectedProtocol } from "./data/protect
 import { config, setupStores } from "./data/store"
 import { receiveMain, sendMain, sendToMain } from "./IPC/main"
 import { autoErrorReport } from "./IPC/responsesMain"
-import { receiveNDI } from "./ndi/talk"
 import { receiveOMT } from "./omt/talk"
 import { OutputHelper } from "./output/OutputHelper"
 import { setRtmpNoticeListener, setRtmpStatusListener } from "./streaming/RtmpStreamer"
@@ -209,7 +208,9 @@ function createMain() {
         width: getWindowBounds("width"),
         height: getWindowBounds("height"),
         frame: !isProd || !isWindows,
-        autoHideMenuBar: isProd && isWindows
+        // The renderer already provides the app menu. Keep native accelerators
+        // available with Alt without showing a second menu bar on Windows.
+        autoHideMenuBar: isWindows
     }
 
     // should be centered to screen if x & y is not set (or bottom left on mac)
@@ -268,7 +269,7 @@ export async function loadWindowContent(window: BrowserWindow, type: null | "out
     if (isProd) window.loadFile("public/index.html").catch(loadingFailed)
     else {
         // load development environment
-        if (mainOutput) openDevTools(window)
+        if (mainOutput && process.env.LVM_OPEN_DEVTOOLS === "1") openDevTools(window)
         window.loadURL("http://localhost:3000").catch(loadingFailed)
     }
 
@@ -357,6 +358,16 @@ export function setGlobalMenu(strings: Dictionary = {}) {
 
 // ----- GLOBAL LISTENERS -----
 
+let closingOutputsBeforeQuit = false
+app.on("before-quit", (event) => {
+    if (closingOutputsBeforeQuit || OutputHelper.getKeys().length === 0) return
+    event.preventDefault()
+    closingOutputsBeforeQuit = true
+    void OutputHelper.Lifecycle.closeAllOutputs()
+        .catch((error) => console.error("Output cleanup before quit failed:", error))
+        .finally(() => app.quit())
+})
+
 // quit app when all windows have been closed
 app.on("window-all-closed", () => {
     cleanupBeforeQuit()
@@ -411,7 +422,6 @@ ipcMain.on(MAIN, receiveMain)
 ipcMain.on(OUTPUT, OutputHelper.receiveOutput)
 ipcMain.on(EXPORT, startExport)
 ipcMain.on(CLOUD, cloudConnect)
-ipcMain.on(NDI, receiveNDI)
 ipcMain.on(OMT, receiveOMT)
 ipcMain.on(BLACKMAGIC, receiveBM)
 ipcMain.on(AUDIO, receiveAudio)

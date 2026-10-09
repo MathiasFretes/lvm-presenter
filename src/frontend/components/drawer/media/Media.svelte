@@ -520,17 +520,9 @@
             <Icon size={1.2} id="window" white />
             <p><T id="live.windows" /></p>
         </MaterialButton> -->
-        <MaterialButton style="flex: 1;" isActive={inputsTab === "ndi"} on:click={() => setSubSubTab("ndi")}>
-            <Icon size={1.1} id="ndi" white />
-            <p>NDI</p>
-        </MaterialButton>
         <MaterialButton style="flex: 1;" isActive={inputsTab === "omt"} on:click={() => setSubSubTab("omt")}>
             <Icon size={1.2} id="omt" white />
             <p>OMT</p>
-        </MaterialButton>
-        <MaterialButton style="flex: 1;" isActive={inputsTab === "blackmagic"} on:click={() => setSubSubTab("blackmagic")}>
-            <Icon size={1.2} id="blackmagic" white />
-            <p>Blackmagic</p>
         </MaterialButton>
     </div>
 {:else if active === "online"}

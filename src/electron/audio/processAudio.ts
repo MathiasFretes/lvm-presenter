@@ -1,6 +1,5 @@
 import type { OpusEncoder as TOpusEncoder } from "@discordjs/opus"
 import { BlackmagicSender } from "../blackmagic/BlackmagicSender"
-import { NdiSender } from "../ndi/NdiSender"
 import { OmtSender } from "../omt/OmtSender"
 import { getServerData, toServer } from "../servers"
 import { RtmpStreamer } from "../streaming/RtmpStreamer"
@@ -30,16 +29,7 @@ export async function processAudio(buffer: Buffer, sampleRate: number = 48000, t
     const sr = Number(sampleRate) || 48000
     const tid = typeof targetId === "string" ? targetId : undefined
 
-    // Only route to NDI if targetId matches an NDI output ID or is not specified
-    if (!tid || Object.keys(NdiSender.NDI).includes(tid)) {
-        if (tid) {
-            NdiSender.sendAudioBufferNDITarget(tid, buffer, { sampleRate: sr, channelCount: channelCount2 })
-        } else {
-            NdiSender.sendAudioBufferNDI(buffer, { sampleRate: sr, channelCount: channelCount2 })
-        }
-    }
-
-    // Route to OMT the same way (same planar Float32 buffer contract as NDI)
+    // LVM NDI 0.1 is video-only. OMT retains its existing audio path.
     if (!tid || Object.keys(OmtSender.OMT).includes(tid)) {
         OmtSender.sendAudioBufferOMT(buffer, { sampleRate: sr, channelCount: channelCount2 })
     }

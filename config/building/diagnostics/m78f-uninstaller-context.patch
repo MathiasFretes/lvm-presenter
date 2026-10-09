@@ -1,0 +1,7 @@
+--- a/node_modules/app-builder-lib/templates/nsis/uninstaller.nsh
++++ b/node_modules/app-builder-lib/templates/nsis/uninstaller.nsh
+@@ -31,1 +31,4 @@
++  !ifmacrodef LvmQaBeforeUnInit
++    !insertmacro LvmQaBeforeUnInit
++  !endif
+   !insertmacro initMultiUser

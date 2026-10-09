@@ -49,17 +49,9 @@
             <Icon size={1.2} id="screen" white />
             <p><T id="live.screens" /></p>
         </MaterialButton>
-        <MaterialButton style="flex: 1;" isActive={activeType === "ndi"} on:click={() => (activeType = "ndi")}>
-            <Icon size={1.1} id="ndi" white />
-            <p>NDI</p>
-        </MaterialButton>
         <MaterialButton style="flex: 1;" isActive={activeType === "omt"} on:click={() => (activeType = "omt")}>
             <Icon size={1.2} id="omt" white />
             <p>OMT</p>
-        </MaterialButton>
-        <MaterialButton style="flex: 1;" isActive={activeType === "blackmagic"} on:click={() => (activeType = "blackmagic")}>
-            <Icon size={1.2} id="blackmagic" white />
-            <p>Blackmagic</p>
         </MaterialButton>
     </div>
 

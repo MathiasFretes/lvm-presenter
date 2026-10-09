@@ -27,6 +27,7 @@ import { save } from "../data/save"
 import { _store, appDataPath, config, createStores, getStore, getStoreValue, setStoreValue } from "../data/store"
 import { captureSlide, doesMediaExist, getThumbnail, getThumbnailFolderPath, pdfToImage, saveImage } from "../data/thumbnails"
 import { OutputHelper } from "../output/OutputHelper"
+import { LvmNdiBridge } from "../output/LvmNdiBridge"
 import { libreConvert } from "../output/ppt/libreConverter"
 import { getPresentationApplications, presentationControl, startSlideshow } from "../output/ppt/presentation"
 import { closeServers, startServers, updateServerData } from "../servers"
@@ -119,6 +120,7 @@ export const mainResponses: MainResponses = {
     [Main.GET_DISPLAYS]: () => screen.getAllDisplays(),
     [Main.GET_GRAPHICS_DEVICES]: async () => await listGraphicsDevices(),
     [Main.OUTPUT]: (_, e) => (e.sender.id === getMainWindow()?.webContents.id ? "false" : "true"),
+    [Main.LVM_NDI_STATUS]: () => LvmNdiBridge.snapshot(),
     // MEDIA
     [Main.DOES_MEDIA_EXIST]: (data) => doesMediaExist(data),
     [Main.GET_THUMBNAIL]: async (data) => await getThumbnail(data),

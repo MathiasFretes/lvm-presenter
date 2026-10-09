@@ -46,7 +46,7 @@
     })
 </script>
 
-<Center class="context #splash">
+<Center class="context #splash" style="overflow-x: hidden;">
     <h1>LVM Presenter</h1>
     <p style="opacity: 0.7;">v{$version}</p>
     {#if $special.splashText}
@@ -144,6 +144,11 @@
     @media screen and (max-width: 800px) {
         h1 {
             font-size: 2em;
+        }
+    }
+    @media screen and (min-width: 801px) and (max-width: 1200px) {
+        h1 {
+            font-size: clamp(2em, 3.5vw, 3em);
         }
     }
 </style>

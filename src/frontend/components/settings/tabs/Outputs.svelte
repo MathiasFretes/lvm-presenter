@@ -1,13 +1,13 @@
 <script lang="ts">
-    import { onDestroy } from "svelte"
+    import { onDestroy, onMount } from "svelte"
     import { uid } from "uid"
-    import { BLACKMAGIC, NDI, OMT, OUTPUT } from "../../../../types/Channels"
+    import { BLACKMAGIC, OMT, OUTPUT } from "../../../../types/Channels"
     import { Main } from "../../../../types/IPC/Main"
     import type { Option } from "../../../../types/Main"
     import type { Output, RtmpDestination } from "../../../../types/Output"
     import { AudioAnalyser } from "../../../audio/audioAnalyser"
     import { requestMain } from "../../../IPC/main"
-    import { activePage, activePopup, activeStage, activeStyle, alertMessage, currentOutputSettings, ndiData, omtData, outputDisplay, outputs, rtmpStatus, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
+    import { activePage, activeStage, activeStyle, currentOutputSettings, ndiData, omtData, outputDisplay, outputs, rtmpStatus, saved, settingsTab, stageShows, styles, toggleOutputEnabled } from "../../../stores"
     import { newToast } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { destroy, receive, send } from "../../../utils/request"
@@ -19,6 +19,7 @@
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialCheckbox from "../../inputs/MaterialCheckbox.svelte"
     import MaterialDropdown from "../../inputs/MaterialDropdown.svelte"
+    import Link from "../../inputs/Link.svelte"
     import MaterialPopupButton from "../../inputs/MaterialPopupButton.svelte"
     import MaterialTextInput from "../../inputs/MaterialTextInput.svelte"
     import MaterialToggleSwitch from "../../inputs/MaterialToggleSwitch.svelte"
@@ -28,6 +29,47 @@
 
     let currentOutput: Output | null = null
     $: if ($currentOutputSettings) currentOutput = clone({ id: $currentOutputSettings, ...$outputs[$currentOutputSettings] })
+
+    let lvmNdiStatus: { state: "inactive" | "starting" | "active" | "error"; error: string | null; outputId: string } | null = null
+    let ndiStatusPending = false
+    async function refreshLvmNdiStatus() {
+        if (!currentOutput?.lvmNdi || ndiStatusPending) return
+        ndiStatusPending = true
+        try {
+            lvmNdiStatus = (await requestMain(Main.LVM_NDI_STATUS)) || null
+        } catch {
+            lvmNdiStatus = { state: "error", error: "No se pudo consultar el estado de LVM NDI", outputId: currentOutput?.id || "" }
+        } finally {
+            ndiStatusPending = false
+        }
+    }
+    onMount(() => {
+        void refreshLvmNdiStatus()
+        const timer = setInterval(() => void refreshLvmNdiStatus(), 1000)
+        return () => clearInterval(timer)
+    })
+
+    function toggleLvmNdi(enabled: boolean) {
+        const id = currentOutput?.id
+        if (!id) return
+        if (enabled && Object.entries($outputs).some(([otherId, out]) => otherId !== id && out.lvmNdi)) {
+            newToast("Solo se admite una salida LVM NDI por ahora.")
+            return
+        }
+        updateOutput("lvmNdi", enabled)
+        saved.set(false)
+        if (currentOutput?.enabled) send(OUTPUT, ["LVM_NDI_TOGGLE"], { id, enabled, config: $outputs[id]?.lvmNdiData })
+        void refreshLvmNdiStatus()
+    }
+
+    function updateLvmNdiData(value: string, key: "name" | "fps") {
+        const id = currentOutput?.id
+        if (!id) return
+        const current = $outputs[id]?.lvmNdiData || {}
+        const updated = { ...current, [key]: key === "fps" ? (value === "60" ? 60 : 30) : value.trim() || "LVM Presenter" }
+        updateOutput("lvmNdiData", updated)
+        saved.set(false)
+    }
 
     $: if (currentOutput?.blackmagic) send(BLACKMAGIC, ["GET_DEVICES"])
 
@@ -110,29 +152,6 @@
     function editStage() {
         activeStage.set({ id: stageId, items: [] })
         activePage.set("stage")
-    }
-
-    // ndi
-    function updateNdiData(e: any, key: string) {
-        let id = currentOutput?.id
-        if (!id) return
-
-        let newData = $outputs[id]?.ndiData
-        if (!newData) newData = {}
-
-        let value = e?.detail?.id ?? e
-
-        newData[key] = value
-
-        updateOutput("ndiData", newData)
-
-        send(NDI, ["NDI_DATA"], { id, ...newData })
-
-        if (key === "name" || key === "groups") {
-            alertMessage.set("settings.restart_for_change")
-            activePopup.set("alert")
-            saved.set(false)
-        }
     }
 
     // omt
@@ -349,9 +368,9 @@
     $: outputLabel = (currentOutput?.blackmagicData?.displayMode || `${currentOutput?.bounds?.width || 1920}x${currentOutput?.bounds?.height || 1080}`) + (isCropped ? ` - settings.cropped` : "")
 </script>
 
-{#if outputsList.filter((a) => !a.stageOutput).length > 1 || !currentOutput?.enabled || currentOutput?.stageOutput}
+{#if outputsList.filter((a) => !a.stageOutput).length > 1 || !currentOutput?.enabled || currentOutput?.stageOutput || currentOutput?.lvmNdi}
     {@const isStreaming = currentOutput?.webrtcData?.streaming || currentOutput?.rtmpData?.streaming}
-    <MaterialToggleSwitch label="settings.enabled" checked={currentOutput?.enabled} defaultValue={true} disabled={(!currentOutput?.stageOutput && currentOutput?.enabled && activeOutputs.length < 2) || (currentOutput?.enabled && isStreaming)} on:change={(e) => _toggleOutput(e.detail)} />
+    <MaterialToggleSwitch label="settings.enabled" checked={currentOutput?.enabled} defaultValue={true} disabled={(!currentOutput?.lvmNdi && !currentOutput?.stageOutput && currentOutput?.enabled && activeOutputs.length < 2) || (currentOutput?.enabled && isStreaming)} on:change={(e) => _toggleOutput(e.detail)} />
 {/if}
 
 {#if stageId}
@@ -415,29 +434,40 @@
 {/if}
 
 {#if currentOutput?.ndi}
-    <Title label="NDI®" icon="ndi" />
+    <Title label="NDI heredado deshabilitado" icon="ndi" />
+    <p>Esta salida requiere migración a LVM NDI. La configuración anterior ya no transmite.</p>
+{/if}
 
-    <InputRow>
-        {#if currentOutput.invisible && !currentOutput.blackmagic}
-            <MaterialPopupButton label="edit.size" value={outputLabel} name={outputLabel} icon="resize" popupId="change_output_values" />
+{#if currentOutput && !currentOutput.stageOutput && !currentOutput.ndi}
+    <Title label="LVM NDI" icon="ndi" />
+    <MaterialToggleSwitch label="Enviar video por LVM NDI" checked={!!currentOutput.lvmNdi} on:change={(e) => toggleLvmNdi(e.detail)} />
+    {#if currentOutput.lvmNdi}
+        <p class="hint">NDI® requiere el <Link url="https://ndi.link/NDIRedistV6">runtime oficial</Link> en este equipo. <Link url="https://ndi.video/">Información de NDI</Link>.</p>
+        <InputRow>
+            <MaterialTextInput label="Nombre de fuente" value={currentOutput.lvmNdiData?.name || "LVM Presenter"} disabled={!!currentOutput.enabled} on:change={(e) => updateLvmNdiData(e.detail, "name")} />
+            <MaterialDropdown label="FPS" value={String(currentOutput.lvmNdiData?.fps || 30)} options={[{ value: "30", label: "30 fps" }, { value: "60", label: "60 fps" }]} disabled={!!currentOutput.enabled} on:change={(e) => updateLvmNdiData(e.detail.id, "fps")} />
+        </InputRow>
+        {#if currentOutput.invisible}
+            <MaterialPopupButton label="Resolución de salida" value={outputLabel} name={outputLabel} icon="resize" popupId="change_output_values" />
+        {:else}
+            <p class="hint">La señal usa la resolución de esta ventana de salida.</p>
         {/if}
-        <MaterialDropdown label="settings.frame_rate" value={currentOutput.ndiData?.framerate || "30"} defaultValue="30" options={framerates} on:change={(e) => updateNdiData(e.detail, "framerate")} />
-    </InputRow>
-
-    <InputRow>
-        <MaterialTextInput label="inputs.name" value={currentOutput.ndiData?.name || `LVM Presenter NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} defaultValue={`LVM Presenter NDI${currentOutput.name ? ` - ${currentOutput.name}` : ""}`} on:change={(e) => updateNdiData(e.detail, "name")} />
-        <MaterialTextInput label="inputs.group" title="settings.comma_seperated" value={currentOutput.ndiData?.groups || ""} defaultValue="" placeholder="public" on:change={(e) => updateNdiData(e.detail, "groups")} />
-    </InputRow>
-
-    <!-- not sure if we need to toggle this off? -->
-    <MaterialToggleSwitch label="settings.transparent" checked={currentOutput.transparent} defaultValue={true} on:change={(e) => updateOutput("transparent", e.detail)} />
-
-    <!-- Connections count (connection status visible by blue indicator) -->
-    <!-- {#if $ndiData[currentOutput?.id || ""]?.connections > 0}
-        <div style="padding: 10px;font-size: 0.8em;opacity: 0.4;text-align: center;">
-            {$ndiData[currentOutput?.id || ""].connections}
-        </div>
-    {/if} -->
+        {#if currentOutput.enabled}
+            <p class="hint">Desactivá la salida para cambiar nombre o FPS.</p>
+        {/if}
+        <p class="ndi-status" role="status">
+            Estado NDI:
+            {#if !currentOutput.enabled}Inactivo
+            {:else if lvmNdiStatus?.outputId && lvmNdiStatus.outputId !== currentOutput.id}Otra salida usa NDI
+            {:else if lvmNdiStatus?.state === "active"}Activo
+            {:else if lvmNdiStatus?.state === "starting"}Iniciando
+            {:else if lvmNdiStatus?.state === "error"}Error
+            {:else}Inactivo{/if}
+        </p>
+        {#if currentOutput.enabled && lvmNdiStatus?.outputId === currentOutput.id && lvmNdiStatus?.state === "error"}
+            <p class="ndi-error" role="alert">{lvmNdiStatus?.error || "No se pudo iniciar LVM NDI"}</p>
+        {/if}
+    {/if}
 {/if}
 
 {#if currentOutput?.omt}
@@ -547,6 +577,8 @@
 {/if}
 
 <style>
+    .ndi-status { padding: 8px 10px; }
+    .ndi-error { padding: 0 10px 10px; color: #ff8080; overflow-wrap: anywhere; }
     .hint {
         padding: 0 10px 10px;
         font-size: 0.8em;

@@ -7,6 +7,9 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
     let client: any = null
     let commandQueue = Promise.resolve()
     let isExecuting = false
+    const sendToParent = (message: any) => {
+        if (process.connected) process.send?.(message, () => {})
+    }
 
     const enqueueNativeCall = (fn: () => void) => {
         commandQueue = commandQueue
@@ -21,7 +24,7 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
             })
             .catch((err) => {
                 isExecuting = false
-                process.send?.({ type: "error", error: err?.message || String(err) })
+                sendToParent({ type: "error", error: err?.message || String(err) })
             })
     }
 
@@ -35,7 +38,7 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
                         client = new (require(mPath).SpotifyClient)()
                         client.start()
                     }
-                    process.send?.({ type: "ready" })
+                    sendToParent({ type: "ready" })
                 } catch (e: any) {
                     let error = e.message
 
@@ -43,7 +46,7 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
                         error += "\n\nYou are likely missing the Visual C++ Redistributable. You can download and install it from here: https://aka.ms/vs/17/release/vc_redist.x64.exe"
                     }
 
-                    process.send?.({ type: "error", error: `Failed to init Spotify Controller: ${error}` })
+                    sendToParent({ type: "error", error: `Failed to init Spotify Controller: ${error}` })
                 }
             } else if (msg.type === "getState") {
                 enqueueNativeCall(() => {
@@ -54,9 +57,9 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
                             if (s.albumArt?.length) s.albumArtBase64 = `data:image/jpeg;base64,${s.albumArt.toString("base64")}`
                             delete s.albumArt
                         }
-                        process.send?.({ type: "state", state: s })
+                        sendToParent({ type: "state", state: s })
                     } catch (err: any) {
-                        process.send?.({ type: "state", state: null })
+                        sendToParent({ type: "state", state: null })
                     }
                 })
             } else if (msg.type === "command") {
@@ -79,12 +82,12 @@ if (process.env.SPOTIFY_BRIDGE === "true") {
                             else if (typeof client.setVolume === "function") client.setVolume(v)
                         } else if (c === "pause") client.pause()
                     } catch (err: any) {
-                        process.send?.({ type: "error", error: `Command ${c} failed: ${err?.message || String(err)}` })
+                        sendToParent({ type: "error", error: `Command ${c} failed: ${err?.message || String(err)}` })
                     }
                 })
             }
         } catch (e: any) {
-            process.send?.({ type: "error", error: e.message })
+            sendToParent({ type: "error", error: e.message })
         }
     })
 

@@ -91,6 +91,7 @@ export enum Main {
     GET_DISPLAYS = "GET_DISPLAYS",
     GET_GRAPHICS_DEVICES = "GET_GRAPHICS_DEVICES",
     OUTPUT = "OUTPUT",
+    LVM_NDI_STATUS = "LVM_NDI_STATUS",
     DOES_MEDIA_EXIST = "DOES_MEDIA_EXIST",
     GET_THUMBNAIL = "GET_THUMBNAIL",
     SAVE_IMAGE = "SAVE_IMAGE",
@@ -355,6 +356,7 @@ export interface MainReturnPayloads {
     [Main.GET_EMPTY_SHOWS]: Promise<{ id: string; name: string }[] | undefined>
     [Main.FULL_SHOWS_LIST]: string[]
     [Main.GET_SCREENS]: Promise<{ name: string; id: string }[]>
+    [Main.LVM_NDI_STATUS]: { state: "inactive" | "starting" | "active" | "error"; error: string | null; outputId: string; name: string; configuredFps: 30 | 60 }
     [Main.GET_GRAPHICS_DEVICES]: Promise<{ value: string; label: string }[]>
     [Main.GET_WINDOWS]: Promise<{ name: string; id: string }[]>
     [Main.DOES_MEDIA_EXIST]: Promise<{ path: string; exists: boolean; creationTime?: number }>

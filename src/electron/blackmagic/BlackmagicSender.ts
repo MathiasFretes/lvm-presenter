@@ -2,7 +2,7 @@ import type { Size } from "electron"
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type PlaybackChannel = any
 import os from "os"
-import util from "../ndi/vingester-util"
+import { argbToBgra, bgraToBgrx } from "./pixelFormat"
 import { wait } from "../utils/helpers"
 import { BlackmagicManager } from "./BlackmagicManager"
 import { BufferManager } from "./BufferManager"
@@ -1010,7 +1010,7 @@ export class BlackmagicSender {
         } else if (format.includes("RGBX")) {
             const result = reusableOutputBuffer && reusableOutputBuffer.length >= frame.length ? reusableOutputBuffer : Buffer.allocUnsafe(frame.length)
             frame.copy(result, 0, 0, frame.length)
-            if (this.devicePixelMode === "BGRA") util.ImageBufferAdjustment.BGRAtoBGRX(result)
+            if (this.devicePixelMode === "BGRA") bgraToBgrx(result)
             else ImageBufferConverter.ARGBtoRGBX(result)
             return result
         } else if (format.includes("ARGB")) {
@@ -1036,7 +1036,7 @@ export class BlackmagicSender {
                 frame.copy(result, 0, 0, frame.length)
                 // Un-premultiply ARGB before swizzling to BGRA for straight-alpha DeckLink keyer
                 if (enableKeying) ImageBufferConverter.unpremultiplyARGB(result)
-                util.ImageBufferAdjustment.ARGBtoBGRA(result)
+                argbToBgra(result)
                 return result
             }
             // devicePixelMode === "BGRA": un-premultiply in-place on a copy

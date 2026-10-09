@@ -3,17 +3,17 @@
     import { translateText } from "../../../utils/language"
     import MaterialButton from "../../inputs/MaterialButton.svelte"
     import MaterialMultiChoice from "../../inputs/MaterialMultiChoice.svelte"
+    import Link from "../../inputs/Link.svelte"
     import { registerPopupSubmit } from "../../../utils/popup"
 
     registerPopupSubmit(confirm)
 
     const localTypes = [
         { id: "window", name: translateText("settings.window"), icon: "hdmi", tip: "HDMI, DisplayPort" },
-        { id: "blackmagic", name: "Blackmagic Design", icon: "blackmagic", tip: "DeckLink, UltraStudio" }
     ]
 
     const networkTypes = [
-        { id: "ndi", name: "NDI®", icon: "ndi", tip: "IP, OBS" },
+        { id: "lvmNdi", name: "LVM NDI", icon: "ndi", tip: "Video NDI en la red local" },
         { id: "omt", name: "OMT", icon: "omt", tip: "IP" },
         { id: "webrtc", name: "WebRTC", icon: "broadcast", tip: "WHIP, restream.io" },
         { id: "rtmp", name: "RTMP", icon: "broadcast", tip: "YouTube, Twitch, Facebook Live" }
@@ -38,6 +38,7 @@
     <div class="section">
         <p class="title">{translateText("settings.network_output")}</p>
         <MaterialMultiChoice options={networkTypes} value={networkType} on:click={(e) => (networkType = e.detail)} highlightFirst={false} canDeselect />
+        <p class="ndi-info">NDI®: <Link url="https://ndi.video/">información y herramientas oficiales</Link></p>
     </div>
 </div>
 
@@ -62,4 +63,5 @@
         opacity: 0.7;
         font-size: 0.9em;
     }
+    .ndi-info { font-size: 0.8em; opacity: 0.8; }
 </style>

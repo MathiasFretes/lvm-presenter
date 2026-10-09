@@ -5,6 +5,7 @@ import { tmpdir } from "node:os"
 import { join } from "node:path"
 import { spawnSync } from "node:child_process"
 import { test } from "node:test"
+import { fileURLToPath } from "node:url"
 import { serviceToProject } from "./serviceToProject.mjs"
 
 const example = JSON.parse(await readFile(new URL("../../examples/sunday-service.project", import.meta.url), "utf8"))
@@ -59,7 +60,7 @@ test("CLI rejects corrupt and future JSON without creating an output file", asyn
     const folder = await mkdtemp(join(tmpdir(), "lvm-invalid-"))
     const input = join(folder, "input.json")
     const output = join(folder, "output.project")
-    const script = new URL("../../scripts/lvm/service-to-project.mjs", import.meta.url).pathname.replace(/^\/(\w:)/, "$1")
+    const script = fileURLToPath(new URL("../../scripts/lvm/service-to-project.mjs", import.meta.url))
     try {
         for (const content of ["{bad json", JSON.stringify({ ...hostileService, schemaVersion: "0.2" })]) {
             await writeFile(input, content)

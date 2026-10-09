@@ -24,6 +24,7 @@ export class CaptureLifecycle {
 
     private static captureLoopToken: { [key: string]: number } = {}
     private static activeCaptures: Set<string> = new Set()
+    private static lvmFrameSubscriptions: Set<string> = new Set()
 
     static startCapture(id: string, toggle: { [key: string]: boolean } = {}) {
         const output = OutputHelper.getOutput(id)
@@ -36,6 +37,15 @@ export class CaptureLifecycle {
                 CaptureHelper.Transmitter.startTransmitting(id)
                 this.updateWebRtcHostState()
                 this.updateRtmpState()
+                const options = output.captureOptions.options
+                if (this.lvmFrameSubscriptions.has(id) && (!options.lvmNdi || Object.entries(options).some(([key, enabled]) => key !== "lvmNdi" && enabled))) {
+                    this.endLvmFrameSubscription(id, output.captureOptions)
+                    if (Object.values(options).some(Boolean)) {
+                        const token = (this.captureLoopToken[id] || 0) + 1
+                        this.captureLoopToken[id] = token
+                        this.runCaptureLoop(id, token, output)
+                    } else this.stopCapture(id)
+                }
             }
             return
         }
@@ -77,7 +87,51 @@ export class CaptureLifecycle {
 
         // OSR outputs are driven by paint events (OutputLifecycle.attachOsrCapture -> transmitFrame),
         // so skip the capturePage poll for them; channels/senders are still set up above.
-        if (!output.osr) this.runCaptureLoop(id, token, output)
+        if (!output.osr) {
+            const onlyLvmNdi = captureOptions.options.lvmNdi && Object.entries(captureOptions.options).every(([key, enabled]) => !enabled || key === "lvmNdi")
+            if (onlyLvmNdi) this.startLvmFrameSubscription(id, token, captureOptions)
+            else this.runCaptureLoop(id, token, output)
+        }
+    }
+
+    private static startLvmFrameSubscription(id: string, token: number, captureOpts: any) {
+        const contents = captureOpts.window.webContents
+        let latest: Electron.NativeImage | null = null
+        try {
+            contents.beginFrameSubscription(false, (image: Electron.NativeImage) => {
+                if (!image.isEmpty()) latest = image
+            })
+            this.lvmFrameSubscriptions.add(id)
+        } catch (error) {
+            console.warn(`LVM frame subscription unavailable for ${id}; using capturePage:`, error)
+            const output = OutputHelper.getOutput(id)
+            if (output) this.runCaptureLoop(id, token, output)
+            return
+        }
+
+        const interval = 1000 / captureOpts.framerates.lvmNdi
+        let nextDue = performance.now() + interval
+        const tick = () => {
+            if (!this.shouldContinueCapture(id, token, captureOpts)) return
+            if (latest) CaptureTransmitter.transmitFrame(id, latest)
+            nextDue += interval
+            if (nextDue < performance.now()) nextDue = performance.now() + interval
+            captureOpts.frameSubscription = setTimeout(tick, Math.max(1, nextDue - performance.now()))
+        }
+        captureOpts.frameSubscription = setTimeout(tick, interval)
+    }
+
+    private static endLvmFrameSubscription(id: string, captureOpts: any) {
+        if (!this.lvmFrameSubscriptions.delete(id)) return
+        if (captureOpts.frameSubscription) clearTimeout(captureOpts.frameSubscription)
+        captureOpts.frameSubscription = null
+        try {
+            if (!captureOpts.window.isDestroyed() && !captureOpts.window.webContents.isDestroyed()) {
+                captureOpts.window.webContents.endFrameSubscription()
+            }
+        } catch (error) {
+            console.warn(`LVM frame subscription cleanup failed for ${id}:`, error)
+        }
     }
 
     private static updateCaptureToggles(id: string, captureOptions: any, toggle: { [key: string]: boolean }) {
@@ -93,6 +147,7 @@ export class CaptureLifecycle {
         console.info("Capture - starting: " + id)
 
         const captureFrame = async () => {
+            const captureStartedAt = performance.now()
             const captureOpts = output.captureOptions
 
             if (!this.shouldContinueCapture(id, token, captureOpts)) {
@@ -121,7 +176,12 @@ export class CaptureLifecycle {
             }
 
             const delay = this.calculateFrameDelay(id, captureOpts)
-            captureOpts.frameSubscription = setTimeout(captureFrame, delay)
+            // capturePage and synchronous LVM NDI send both consume part of the
+            // requested interval. Preserve the existing behavior for other channels.
+            const nextDelay = captureOpts.options?.lvmNdi
+                ? Math.max(this.MIN_DELAY_MS, delay - (performance.now() - captureStartedAt))
+                : delay
+            captureOpts.frameSubscription = setTimeout(captureFrame, nextDelay)
         }
 
         captureFrame()
@@ -194,7 +254,7 @@ export class CaptureLifecycle {
         // static content - capture at a low rate until a change is detected
         // (Blackmagic and NDI frames bypass change detection / idle backoff to maintain video stream clocks)
         const timeSinceChange = CaptureTransmitter.getTimeSinceLastChange(id)
-        if (!options.blackmagic && !options.ndi && timeSinceChange > this.IDLE_AFTER_MS) {
+        if (!options.blackmagic && !options.ndi && !options.lvmNdi && timeSinceChange > this.IDLE_AFTER_MS) {
             return Math.min(baseCaptureFrameRate, this.IDLE_FPS)
         }
 
@@ -213,26 +273,17 @@ export class CaptureLifecycle {
             clearTimeout(capture.frameSubscription)
             capture.frameSubscription = null
         }
+        this.endLvmFrameSubscription(id, capture)
 
-        const channels = ["ndi", "omt", "blackmagic", "server", "stage", "webrtc", "rtmp"]
+        const channels = ["lvmNdi", "ndi", "omt", "blackmagic", "server", "stage", "webrtc", "rtmp"]
         channels.forEach((channel) => CaptureHelper.Transmitter.stopChannel(id, channel))
 
         console.info("Capture - stopping: " + id)
 
         OutputHelper.Lifecycle.releaseOsrCaptureTextures(id)
-        if (!(output as any).follower) this.cleanupListeners(capture.window)
         delete output.captureOptions
         this.updateWebRtcHostState()
         this.updateRtmpState()
-    }
-
-    private static cleanupListeners(window: any) {
-        if (!window || window.isDestroyed()) return
-
-        window.removeAllListeners()
-        if (window.webContents && !window.webContents.isDestroyed?.()) {
-            window.webContents.removeAllListeners()
-        }
     }
 
     private static updateWebRtcHostState() {

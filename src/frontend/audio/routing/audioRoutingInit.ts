@@ -1,6 +1,7 @@
 import { get } from "svelte/store"
 import type { AudioRoutingChannel, AudioRoutingConfig, AudioRoutingConnection } from "../../../types/AudioRouting"
-import { getAllOutputs, getFirstActiveOutput } from "../../components/helpers/output"
+import type { Output } from "../../../types/Output"
+import { getAllOutputs } from "../../components/helpers/output"
 import { audioRouting, dictionary, outputs } from "../../stores"
 import { waitUntilValueIsDefined } from "../../utils/common"
 import { translateText } from "../../utils/language"
@@ -58,6 +59,8 @@ export async function initAudioRouting(data: AudioRoutingConfig | null) {
     const outputsList = getAllOutputs()
     let firstConnected = false
     outputsList.forEach((out) => {
+        // A dedicated invisible LVM NDI output sends video only. It is not an audio sink.
+        if (isVideoOnlyLvmNdi(out)) return
         // any network outputs should have their own channel
         if (out.ndi || out.webrtc || out.rtmp) {
             channels.push({ id: `channel_${out.id}`, name: out.name, color: out.color, outputLink: out.id })
@@ -73,8 +76,8 @@ export async function initAudioRouting(data: AudioRoutingConfig | null) {
     })
 
     if (!firstConnected) {
-        const firstActiveId = getFirstActiveOutput()?.id
-        connections.push({ from: `output_win_sub_${firstActiveId}`, to: "main" })
+        const firstActiveId = outputsList.find((out) => out.enabled && !out.stageOutput && !isVideoOnlyLvmNdi(out))?.id
+        if (firstActiveId) connections.push({ from: `output_win_sub_${firstActiveId}`, to: "main" })
     }
 
     audioRouting.set({ channels, connections })
@@ -89,7 +92,7 @@ export async function resetAudioRouting() {
 // make sure at least one "active" output is connected to the main channel when creating a new output
 export function checkPrimaryOutputRouting() {
     const outputsList = getAllOutputs()
-    const primaryOutputs = outputsList.filter((out) => out.enabled && !out.ndi && !out.webrtc && !out.rtmp && !out.stageOutput)
+    const primaryOutputs = outputsList.filter((out) => out.enabled && !out.ndi && !out.webrtc && !out.rtmp && !out.stageOutput && !isVideoOnlyLvmNdi(out))
     const outputInputs = primaryOutputs.map((out) => `output_win_sub_${out.id}`)
     if (!outputInputs.length) return
 
@@ -102,6 +105,10 @@ export function checkPrimaryOutputRouting() {
         a.connections.push({ from: outputInputs[0], to: "main" })
         return a
     })
+}
+
+function isVideoOnlyLvmNdi(output: Output): boolean {
+    return !!output.lvmNdi && !!output.invisible && !output.omt && !output.webrtc && !output.rtmp && !output.blackmagic
 }
 
 function createOutputConnections(outputId: string) {

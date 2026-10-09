@@ -22,6 +22,8 @@ export interface Output {
     transparent?: boolean
     ndi?: boolean
     ndiData?: any
+    lvmNdi?: boolean
+    lvmNdiData?: { name?: string; fps?: 30 | 60 }
     omt?: boolean
     omtData?: any
     blackmagic?: boolean

@@ -99,12 +99,10 @@
         {#if !$saved && $os.platform !== "win32"}
             <div class="unsaved" />
         {/if}
-        <!-- logo -->
-        <h1 style="align-self: center;width: 100%;padding: 0px 10px;text-align: center;font-size: 1.8em;">LVM Presenter</h1>
-        <!-- <div class="logo">
-            <img style="height: 35px;" src="./import-logos/lvmpresenter.webp" alt="LVM Presenter-logo" draggable={false} />
-            <h1 style="color: var(--text);font-size: 1.7em;">LVM Presenter</h1>
-        </div> -->
+        <div class="lvm-brand">
+            <span class="lvm-brand-mark" aria-hidden="true"><span class="lvm-brand-cross"></span></span>
+            <h1><span class="lvm-brand-name">La Voz <strong>Misionera</strong></span><span class="lvm-brand-product">Presenter</span></h1>
+        </div>
     </span>
     <span>
         <TopButton id="show" />
@@ -158,6 +156,54 @@
 </div>
 
 <style>
+    .lvm-brand {
+        display: flex;
+        align-items: center;
+        gap: var(--lvm-space-3);
+        width: 100%;
+        padding: 0 10px;
+    }
+    .lvm-brand-mark {
+        display: grid;
+        place-items: center;
+        flex: 0 0 32px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--lvm-brand-gold);
+        color: var(--lvm-brand-navy);
+        position: relative;
+    }
+    .lvm-brand-cross::before,
+    .lvm-brand-cross::after {
+        content: "";
+        position: absolute;
+        background: var(--lvm-brand-navy);
+        border-radius: 1px;
+    }
+    .lvm-brand-cross::before {
+        width: 3px;
+        height: 19px;
+        top: 7px;
+        left: 14px;
+    }
+    .lvm-brand-cross::after {
+        width: 13px;
+        height: 3px;
+        top: 12px;
+        left: 9px;
+    }
+    .lvm-brand h1 {
+        margin: 0;
+        color: var(--text);
+        display: flex;
+        flex-direction: column;
+        line-height: 1.05;
+        font-size: 0.74em;
+        font-weight: 700;
+    }
+    .lvm-brand-name strong { color: var(--lvm-brand-gold); }
+    .lvm-brand-product { margin-top: 2px; color: var(--text); font-size: 0.9em; font-weight: 500; }
     .top {
         position: relative;
         display: flex;

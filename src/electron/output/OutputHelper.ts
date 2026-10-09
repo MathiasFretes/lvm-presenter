@@ -4,6 +4,7 @@ import { OUTPUT } from "../../types/Channels"
 import type { Output } from "../../types/Output"
 import type { Message } from "../../types/Socket"
 import { CaptureHelper } from "../capture/CaptureHelper"
+import { LvmNdiBridge } from "./LvmNdiBridge"
 import { OutputBounds } from "./helpers/OutputBounds"
 import { OutputIdentify } from "./helpers/OutputIdentify"
 import { OutputLifecycle } from "./helpers/OutputLifecycle"
@@ -32,6 +33,17 @@ export class OutputHelper {
 
             REQUEST_PREVIEW: (data: { id: string; previewId: string }) => CaptureHelper.Transmitter.requestPreview(data),
             CAPTURE: (data: { id: string; captures: { [key: string]: boolean } }) => CaptureHelper.Lifecycle.startCapture(data.id, data.captures),
+            LVM_NDI_TOGGLE: async (data: { id: string; enabled: boolean; config?: Output["lvmNdiData"] }) => {
+                const output = OutputHelper.getOutput(data.id)
+                if (!output) return
+                if (!data.enabled) CaptureHelper.Lifecycle.startCapture(data.id, { lvmNdi: false })
+                await LvmNdiBridge.disable(data.id)
+                if (data.enabled) {
+                    LvmNdiBridge.enable(data.id, { lvmNdi: true, lvmNdiData: data.config })
+                    if (output.captureOptions) output.captureOptions.framerates.lvmNdi = LvmNdiBridge.framerate(data.id)
+                    CaptureHelper.Lifecycle.startCapture(data.id, { lvmNdi: LvmNdiBridge.selected(data.id) })
+                }
+            },
 
             IDENTIFY_SCREENS: (data: { bounds: Rectangle }[]) => OutputHelper.Identify.identifyScreens(data),
             // PREVIEW_BOUNDS: (data) => OutputHelper.Bounds.setPreviewBounds(data),

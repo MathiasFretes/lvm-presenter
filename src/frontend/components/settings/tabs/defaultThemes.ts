@@ -5,19 +5,19 @@ export const defaultThemes: { [key: string]: Themes } = {
         name: "default",
         default: true,
         font: {
-            family: "",
+            family: "Poppins",
             size: "1em"
         },
         colors: {
-            primary: "#242832",
-            "primary-lighter": "#2f3542",
-            "primary-darker": "#191923",
-            "primary-darkest": "#12121c",
-            text: "#f0f0ff",
+            primary: "#1c2a39",
+            "primary-lighter": "#324356",
+            "primary-darker": "#152230",
+            "primary-darkest": "#101b27",
+            text: "#ffffff",
             textInvert: "#131313",
-            "secondary-text": "#f0f0ff",
-            secondary: "#F0008C",
-            "secondary-opacity": "rgba(240, 0, 140, 0.5)",
+            "secondary-text": "#1c2a39",
+            secondary: "#C6A15B",
+            "secondary-opacity": "rgba(198, 161, 91, 0.35)",
             hover: "rgb(255 255 255 / 0.05)",
             focus: "rgb(255 255 255 / 0.1)"
         }
