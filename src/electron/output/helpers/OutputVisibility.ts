@@ -6,6 +6,7 @@ import type { Output } from "../../../types/Output"
 import { OutputHelper } from "../OutputHelper"
 import { setOutputAlwaysOnTop } from "./OutputAlwaysOnTop"
 import { OutputBounds } from "./OutputBounds"
+import { physicalDisplayBounds } from "./physicalDisplayBounds"
 
 export class OutputVisibility {
     static toggleOutputs(data: { outputs: (Output & { id: string })[]; state: boolean; autoStartup?: boolean; autoPosition?: boolean }) {
@@ -39,7 +40,7 @@ export class OutputVisibility {
             return "invisible"
         }
 
-        let bounds: Rectangle = this.resolveOutputBounds(output, autoPosition)
+        const bounds: Rectangle = this.resolveOutputBounds(output, autoPosition)
 
         const windowCoveringMain = this.amountCovered(bounds, mainWindow!.getBounds()) > 0.5
         const invalidWindowPosition = windowCoveringMain && autoPosition && window.isAlwaysOnTop() === true
@@ -75,11 +76,17 @@ export class OutputVisibility {
         // never auto position locked bounds
         if (output.boundsLocked) return outputBounds
 
+        // The default 1920x1080 bounds can be a monitor's physical resolution.
+        // BrowserWindow bounds are in DIP, so use that monitor's logical bounds
+        // when they describe the same full-screen output.
+        const displayBounds = physicalDisplayBounds(outputBounds, displays)
+        if (displayBounds) return displayBounds
+
         // preserve valid input pos if already on an active display
         if (displays.length > 0 && hasValidBounds && output.bounds) {
             const isCenterOnDisplay = displays.some((d) => {
-                const centerX = output.bounds!.x + output.bounds!.width / 2
-                const centerY = output.bounds!.y + output.bounds!.height / 2
+                const centerX = output.bounds.x + output.bounds.width / 2
+                const centerY = output.bounds.y + output.bounds.height / 2
                 return centerX >= d.bounds.x && centerX < d.bounds.x + d.bounds.width && centerY >= d.bounds.y && centerY < d.bounds.y + d.bounds.height
             })
 
