@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { ContentProviderId } from "../../electron/contentProviders/base/types"
-import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
+import type { ToMainSendPayloads, LvmRemotePresentationState } from "../../types/IPC/ToMain"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
 import type { Show, Slide } from "../../types/Show"
@@ -162,6 +162,34 @@ export const mainResponses: MainResponses = {
     // MAIN
     [ToMain.MENU]: (a) => menuClick(a),
     [ToMain.API]: async (a) => await API_ACTIONS[a.action]?.(a.data),
+    [ToMain.LVM_REMOTE_ACTION]: (a) => {
+        const action = {
+            next: () => API_ACTIONS.next_slide(),
+            previous: () => API_ACTIONS.previous_slide(),
+            goTo: () => API_ACTIONS.index_select_slide({ index: a.slideIndex ?? 0 }),
+            clear: () => API_ACTIONS.clear_all(),
+            restore: () => API_ACTIONS.restore_output()
+        }[a.command]
+        action()
+        const activeOutputId = getActiveOutputs(get(outputs), true, false, true)[0]
+        const output: any = activeOutputId ? get(outputs)[activeOutputId] : null
+        const slide = output?.out?.slide
+        const active: any = get(activeShow)
+        const showId = slide?.id || active?.id
+        const show: any = showId ? get(showsCache)[showId] : null
+        const state: LvmRemotePresentationState = {
+            show: showId ? { id: showId, title: show?.name || "Presentación" } : null,
+            current: slide && typeof slide.index === "number"
+                ? {
+                    itemIndex: active?.index ?? 0,
+                    slideIndex: slide.index,
+                    slideCount: Math.max(1, Object.keys(show?.slides || {}).length)
+                }
+                : null,
+            output: { isLive: Boolean(activeOutputId && output?.active), isCleared: !slide }
+        }
+        return state
+    },
     [Main.DATA_PATH]: (a) => dataPath.set(a),
     [ToMain.ALERT]: (a) => {
         alertMessage.set(a || "")

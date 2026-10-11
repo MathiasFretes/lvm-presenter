@@ -2,7 +2,8 @@
     import { onMount } from "svelte"
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
-    import { requestMain, sendMain } from "../../../IPC/main"
+    import { destroyMain, receiveToMain, requestMain, sendMain } from "../../../IPC/main"
+    import { ToMain } from "../../../../types/IPC/ToMain"
     import { activePage, activePopup, activeShow, activeTriggerFunction, cloudSyncData, companion, connections, contentProviderData, disabledServers, maxConnections, notFound, obsData, outputs, popupData, ports, projectTemplates, providerConnections, saved, serverData, special } from "../../../stores"
     import { translateText } from "../../../utils/language"
     import { startRemoteController, stopRemoteController } from "../../../utils/remoteController"
@@ -22,9 +23,32 @@
 
     let ip = "localhost"
 
+    let lvmRemote: any = { active: false, pairingLink: null, pending: null }
+
     onMount(async () => {
         ip = ((await requestMain(Main.IP)) || ["localhost"])[0]
+        lvmRemote = (await requestMain(Main.LVM_REMOTE_STATUS)) || lvmRemote
     })
+
+    onMount(() => {
+        const listener = receiveToMain(ToMain.LVM_REMOTE_PAIRING_PENDING, (pending) => {
+            lvmRemote = { ...lvmRemote, pending }
+        })
+        return () => destroyMain(listener)
+    })
+
+    async function startLvmRemote() {
+        lvmRemote = (await requestMain(Main.LVM_REMOTE_START)) || lvmRemote
+    }
+
+    async function stopLvmRemote() {
+        lvmRemote = (await requestMain(Main.LVM_REMOTE_STOP)) || lvmRemote
+    }
+
+    async function approveLvmRemote() {
+        if (!lvmRemote.pending?.pairingId) return
+        lvmRemote = (await requestMain(Main.LVM_REMOTE_APPROVE, { pairingId: lvmRemote.pending.pairingId })) || lvmRemote
+    }
 
     // WIP reset in popups
     // function reset() {
@@ -397,6 +421,26 @@
 {/if}
 
 <!-- OBS Studio Controller -->
+<Title label="LVM Presenter Remote" icon="connection" />
+
+<InputRow>
+    <MaterialToggleSwitch label="Control remoto local" checked={lvmRemote.active === true} on:change={(e) => (e.detail ? startLvmRemote() : stopLvmRemote())} />
+</InputRow>
+
+{#if lvmRemote.active}
+    <Tip type="info" value="Emparejamiento local activo. Compartí este enlace solo con el dispositivo que vas a aprobar." top={12} />
+    <InputRow>
+        <MaterialTextInput label="Enlace de emparejamiento" value={lvmRemote.pairingLink?.url || ""} readonly />
+    </InputRow>
+    {#if lvmRemote.pending}
+        <InputRow>
+            <MaterialButton style="flex: 1;" icon="connection" on:click={approveLvmRemote}>
+                Aprobar {lvmRemote.pending.device?.name || "dispositivo"}
+            </MaterialButton>
+        </InputRow>
+    {/if}
+{/if}
+
 <Title label="OBS Studio" icon="record" />
 
 <InputRow arrow={$obsData.enabled}>

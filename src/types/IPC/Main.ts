@@ -92,6 +92,10 @@ export enum Main {
     GET_GRAPHICS_DEVICES = "GET_GRAPHICS_DEVICES",
     OUTPUT = "OUTPUT",
     LVM_NDI_STATUS = "LVM_NDI_STATUS",
+    LVM_REMOTE_START = "LVM_REMOTE_START",
+    LVM_REMOTE_STOP = "LVM_REMOTE_STOP",
+    LVM_REMOTE_STATUS = "LVM_REMOTE_STATUS",
+    LVM_REMOTE_APPROVE = "LVM_REMOTE_APPROVE",
     DOES_MEDIA_EXIST = "DOES_MEDIA_EXIST",
     GET_THUMBNAIL = "GET_THUMBNAIL",
     SAVE_IMAGE = "SAVE_IMAGE",
@@ -220,6 +224,7 @@ export interface MainSendPayloads {
     [Main.DELETE_SHOWS_NI]: { shows: TrimmedShows }
     [Main.GET_EMPTY_SHOWS]: { cached: Shows }
     [Main.OUTPUT]: "true" | "false"
+    [Main.LVM_REMOTE_APPROVE]: { pairingId: string }
     [Main.DOES_MEDIA_EXIST]: { path: string; creationTime?: number; noCache?: boolean }
     [Main.GET_THUMBNAIL]: { input: string; size: number }
     [Main.SAVE_IMAGE]: { id?: string; path?: string; base64?: string; buffer?: ArrayBuffer; filePath?: string[]; format?: "png" | "jpg"; openFolder?: boolean }
@@ -357,6 +362,10 @@ export interface MainReturnPayloads {
     [Main.FULL_SHOWS_LIST]: string[]
     [Main.GET_SCREENS]: Promise<{ name: string; id: string }[]>
     [Main.LVM_NDI_STATUS]: { state: "inactive" | "starting" | "active" | "error"; error: string | null; outputId: string; name: string; configuredFps: 30 | 60 }
+    [Main.LVM_REMOTE_START]: Promise<import("../../electron/lvmRemote/LvmRemoteManager").LvmRemoteStatus>
+    [Main.LVM_REMOTE_STOP]: Promise<import("../../electron/lvmRemote/LvmRemoteManager").LvmRemoteStatus>
+    [Main.LVM_REMOTE_STATUS]: import("../../electron/lvmRemote/LvmRemoteManager").LvmRemoteStatus
+    [Main.LVM_REMOTE_APPROVE]: Promise<import("../../electron/lvmRemote/LvmRemoteManager").LvmRemoteStatus>
     [Main.GET_GRAPHICS_DEVICES]: Promise<{ value: string; label: string }[]>
     [Main.GET_WINDOWS]: Promise<{ name: string; id: string }[]>
     [Main.DOES_MEDIA_EXIST]: Promise<{ path: string; exists: boolean; creationTime?: number }>

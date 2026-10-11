@@ -29,6 +29,8 @@ export enum ToMain {
     WEBSOCKET = "WEBSOCKET",
     AUDIO_METADATA = "AUDIO_METADATA",
     GET_DYNAMIC_VALUES = "GET_DYNAMIC_VALUES",
+    LVM_REMOTE_ACTION = "LVM_REMOTE_ACTION",
+    LVM_REMOTE_PAIRING_PENDING = "LVM_REMOTE_PAIRING_PENDING",
     // Main
     IMPORT2 = "IMPORT2",
     SHOW2 = "SHOW2",
@@ -39,6 +41,12 @@ export enum ToMain {
     OPEN_FOLDER2 = "OPEN_FOLDER2",
     OPEN_FILE2 = "OPEN_FILE2",
     RECEIVE_MIDI2 = "RECEIVE_MIDI2"
+}
+
+export type LvmRemotePresentationState = {
+    show: { id: string; title: string } | null
+    current: { itemIndex: number; slideIndex: number; slideCount: number } | null
+    output: { isLive: boolean; isCleared: boolean }
 }
 export interface ToMainSendPayloads {
     [ToMain.ALERT]: string
@@ -63,6 +71,8 @@ export interface ToMainSendPayloads {
     [ToMain.WEBSOCKET]: "connected"
     [ToMain.AUDIO_METADATA]: { filePath: string; metadata: ICommonTagsResult }
     [ToMain.GET_DYNAMIC_VALUES]: string[]
+    [ToMain.LVM_REMOTE_ACTION]: { command: "next" | "previous" | "goTo" | "clear" | "restore"; slideIndex?: number }
+    [ToMain.LVM_REMOTE_PAIRING_PENDING]: { pairingId: string; device: { id: string; name: string } }
     ///
     [ToMain.IMPORT2]: { channel: string; data: ({ content: Buffer | string | object; name?: string; extension?: string } | string)[]; custom?: any }
     [ToMain.SHOW2]: { error?: string; err?: NodeJS.ErrnoException; id: string }
@@ -81,6 +91,7 @@ export interface ToMainSendPayloads {
 export interface ToMainReturnPayloads {
     [ToMain.API]: Promise<any>
     [ToMain.GET_DYNAMIC_VALUES]: Promise<{ [key: string]: string }>
+    [ToMain.LVM_REMOTE_ACTION]: Promise<LvmRemotePresentationState>
 }
 
 ///////////
