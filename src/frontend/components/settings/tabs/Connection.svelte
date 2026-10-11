@@ -1,4 +1,5 @@
 <script lang="ts">
+    import qrcode from "qrcode-generator"
     import { onMount } from "svelte"
     import type { ContentProviderId } from "../../../../electron/contentProviders/base/types"
     import { Main } from "../../../../types/IPC/Main"
@@ -24,6 +25,13 @@
     let ip = "localhost"
 
     let lvmRemote: any = { active: false, pairingLink: null, pending: null }
+    let lvmRemoteQr = ""
+    $: if (lvmRemote.pairingLink?.url) {
+        const qr = qrcode(0, "M")
+        qr.addData(lvmRemote.pairingLink.url)
+        qr.make()
+        lvmRemoteQr = qr.createSvgTag({ scalable: true, margin: 3 })
+    } else lvmRemoteQr = ""
 
     onMount(async () => {
         ip = ((await requestMain(Main.IP)) || ["localhost"])[0]
@@ -432,6 +440,11 @@
     <InputRow>
         <MaterialTextInput label="Enlace de emparejamiento" value={lvmRemote.pairingLink?.url || ""} readonly />
     </InputRow>
+    {#if lvmRemoteQr}
+        <div class="lvmRemoteQr" aria-label="Código QR de emparejamiento">
+            {@html lvmRemoteQr}
+        </div>
+    {/if}
     {#if lvmRemote.pending}
         <InputRow>
             <MaterialButton style="flex: 1;" icon="connection" on:click={approveLvmRemote}>
@@ -464,3 +477,18 @@
 {#if $obsData.enabled && obsWasDisabled}
     <Tip value="edit.position: guide_title.drawer > tabs.functions > OBS Studio" top={15} />
 {/if}
+
+<style>
+    .lvmRemoteQr {
+        width: min(240px, 100%);
+        aspect-ratio: 1;
+        margin: 12px auto 20px;
+        padding: 12px;
+        border-radius: 12px;
+        background: white;
+    }
+    .lvmRemoteQr :global(svg) {
+        width: 100%;
+        height: 100%;
+    }
+</style>
