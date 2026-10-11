@@ -19,6 +19,21 @@ describe("RemoteTransportServer", () => {
     await Promise.all(servers.splice(0).map((server) => server.close()));
   });
 
+  it("creates the versioned pairing URL consumed by LVM Presenter Remote", () => {
+    const server = new RemoteTransportServer({
+      initialState: () => initialState,
+      onCommand: () => initialState,
+    });
+    servers.push(server);
+
+    const link = server.createPairingLink("192.168.1.20", 4319);
+
+    expect(link.url).toContain("lvm-presenter://remote/0.1?");
+    expect(link.url).toContain("host=192.168.1.20");
+    expect(link.url).toContain("port=4319");
+    expect(link.url).toContain(`pairingId=${link.pairingId}`);
+  });
+
   it("pairs only after local approval, applies an allowed command, and sends a snapshot", async () => {
     const pending: string[] = [];
     const applied: string[] = [];
