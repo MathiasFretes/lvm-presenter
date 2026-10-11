@@ -58,8 +58,11 @@ aprobación visible en Presenter.
 ## Transporte
 
 La implementación inicial usa una sola conexión WebSocket dentro de la LAN,
-creada únicamente después de escanear el QR. El endpoint y los mensajes viven
-bajo el namespace `lvm.remote.0.1`; no se reutilizan rutas ni tipos heredados.
+creada únicamente después de escanear el QR. Al habilitarla explícitamente,
+Presenter escucha en las interfaces locales de la PC para que el teléfono pueda
+alcanzarla; no inicia el servidor por defecto, no descubre pares y no configura
+rutas de Internet. El endpoint y los mensajes viven bajo el namespace
+`lvm.remote.0.1`; no se reutilizan rutas ni tipos heredados.
 
 La primera versión requiere una red local confiable y la aprobación del
 operador. El acceso remoto por Internet, TLS administrado y políticas por

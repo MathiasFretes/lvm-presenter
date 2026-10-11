@@ -74,7 +74,13 @@ export class RemoteTransportServer {
     return this.pairing.createPairing();
   }
 
-  async start(port = 0, host = "127.0.0.1"): Promise<number> {
+  /**
+   * Starts only after an operator enables Presenter Remote. `0.0.0.0` is
+   * intentional: a paired Android device lives on the LAN, not loopback.
+   * The future UI supplies the QR address; this server never discovers peers
+   * or creates Internet-facing routing on its own.
+   */
+  async start(port = 0, host = "0.0.0.0"): Promise<number> {
     if (this.server) throw new Error("remote_transport_already_started");
 
     const socketServer = new WebSocketServer({
