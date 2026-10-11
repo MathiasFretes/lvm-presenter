@@ -35,6 +35,8 @@ export type RemoteTransportOptions = {
   ) => RemotePresentationState | Promise<RemotePresentationState>;
 };
 
+export type PairingLink = PairingOffer & { url: string };
+
 type RemoteMessage = {
   schemaVersion: "0.1";
   type: string;
@@ -72,6 +74,25 @@ export class RemoteTransportServer {
 
   createPairing(): PairingOffer {
     return this.pairing.createPairing();
+  }
+
+  /** Creates the exact one-time URL encoded in the future local QR code. */
+  createPairingLink(lanAddress: string, port: number): PairingLink {
+    if (
+      !lanAddress.trim() ||
+      !Number.isInteger(port) ||
+      port < 1 ||
+      port > 65535
+    ) {
+      throw new Error("remote_pairing_link_invalid_address");
+    }
+    const offer = this.createPairing();
+    const url = new URL("lvm-presenter://remote/0.1");
+    url.searchParams.set("host", lanAddress);
+    url.searchParams.set("port", String(port));
+    url.searchParams.set("pairingId", offer.pairingId);
+    url.searchParams.set("pairingSecret", offer.pairingSecret);
+    return { ...offer, url: url.toString() };
   }
 
   /**
