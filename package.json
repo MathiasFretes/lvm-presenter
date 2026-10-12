@@ -55,6 +55,7 @@
         "test": "npm-run-all -s test:unit test:playwright test:format test:svelte",
         "test:unit": "vitest run --config config/testing/vitest.config.ts",
         "test:lvm": "node --test src/lvm/*.test.mjs",
+        "test:remote-e2e": "vitest run --config config/testing/vitest.config.ts src/electron/lvmRemote/RemoteTransportServer.test.ts src/electron/lvmRemote/RemotePairingService.test.ts",
         "test:playwright": "npx playwright test --config config/testing/playwright.config.ts",
         "test:format": "npx prettier --config config/formatting/.prettierrc.yaml --check src scripts",
         "test:svelte": "svelte-check",
