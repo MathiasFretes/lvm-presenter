@@ -5,6 +5,11 @@ import {
   RemoteTransportServer,
   type RemotePresentationState,
 } from "./RemoteTransportServer";
+import {
+  applyCultoQaCommand,
+  createCultoQaState,
+  cultoQaFixture,
+} from "./CultoQaFixture";
 
 const initialState: RemotePresentationState = {
   show: { id: "culto-general", title: "Culto General" },
@@ -148,39 +153,18 @@ describe("RemoteTransportServer", () => {
   });
 
   it("runs the Culto QA fixture through navigation, blackout, reconnect, and restore", async () => {
-    let state: RemotePresentationState = {
-      show: { id: "culto-qa", title: "Culto QA" },
-      current: { itemIndex: 0, slideIndex: 0, slideCount: 5 },
-      output: { isLive: true, isCleared: false },
-    };
+    expect(cultoQaFixture.slides).toEqual([
+      "Bienvenida",
+      "Canción",
+      "Lectura",
+      "Prédica",
+      "Cierre",
+    ]);
+    let state = createCultoQaState();
     const server = new RemoteTransportServer({
       initialState: () => state,
       onCommand: ({ command, slideIndex }) => {
-        const current = state.current;
-        if (!current) throw new Error("no_presentation");
-        const boundedIndex = (index: number) =>
-          Math.max(0, Math.min(current.slideCount - 1, index));
-        const nextIndex =
-          command === "next"
-            ? boundedIndex(current.slideIndex + 1)
-            : command === "previous"
-              ? boundedIndex(current.slideIndex - 1)
-              : command === "goTo"
-                ? boundedIndex(slideIndex ?? 0)
-                : current.slideIndex;
-        state = {
-          ...state,
-          current: { ...current, slideIndex: nextIndex },
-          output: {
-            ...state.output,
-            isCleared:
-              command === "clear"
-                ? true
-                : command === "restore"
-                  ? false
-                  : state.output.isCleared,
-          },
-        };
+        state = applyCultoQaCommand(state, command, slideIndex);
         return state;
       },
     });
@@ -268,9 +252,12 @@ describe("RemoteTransportServer", () => {
 
 function stateWithSlide(slideIndex: number): RemotePresentationState {
   return {
-    show: { id: "culto-qa", title: "Culto QA" },
-    current: { itemIndex: 0, slideIndex, slideCount: 5 },
-    output: { isLive: true, isCleared: false },
+    ...createCultoQaState(),
+    current: {
+      itemIndex: 0,
+      slideIndex,
+      slideCount: cultoQaFixture.slides.length,
+    },
   };
 }
 
