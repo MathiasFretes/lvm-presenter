@@ -173,13 +173,20 @@ export const mainResponses: MainResponses = {
         // Asking a remote client for the current state must never change the
         // live output. In particular, it must not restore an active blackout.
         action?.()
-        const activeOutputId = getActiveOutputs(get(outputs), true, false, true)[0]
-        const output: any = activeOutputId ? get(outputs)[activeOutputId] : null
+        const allOutputs = get(outputs)
+        const configuredOutputId = getActiveOutputs(allOutputs, true, false, true)[0]
+        // A projected slide is the source of truth for the remote. Prefer it
+        // over a merely selected show and over an output's enabled flag: an
+        // operator can keep a presentation on screen while changing the
+        // selection in the main window.
+        const projected = Object.entries(allOutputs).find(([_, candidate]: any) => candidate?.out?.slide && !candidate.stageOutput)
+        const activeOutputId = projected?.[0] || configuredOutputId
+        const output: any = activeOutputId ? allOutputs[activeOutputId] : null
         const slide = output?.out?.slide
         const active: any = get(activeShow)
-        // `activeShow` is the presentation selected by the operator. A slide
-        // reference can be a group/item identifier, which is not a show ID.
-        const showId = active?.id || slide?.id
+        // `slide.id` is the show currently projected. Fall back to the
+        // operator selection only while no slide has reached an output yet.
+        const showId = slide?.id || active?.id
         const show: any = showId ? get(showsCache)[showId] : null
         const state: LvmRemotePresentationState = {
             show: showId ? { id: showId, title: show?.name || "Presentación" } : null,
