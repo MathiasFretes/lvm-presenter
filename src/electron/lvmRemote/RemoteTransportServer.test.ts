@@ -104,6 +104,41 @@ describe("RemoteTransportServer", () => {
     await server.close();
     await closed;
   });
+
+  it("publishes a changed Presenter state to an already paired device", async () => {
+    const server = new RemoteTransportServer({
+      initialState: () => initialState,
+      onCommand: () => initialState,
+    });
+    servers.push(server);
+    const port = await server.start();
+    const offer = server.createPairing();
+    const client = await connect(`ws://127.0.0.1:${port}/lvm-remote/0.1`);
+
+    client.send(JSON.stringify({
+      schemaVersion: "0.1",
+      type: "pair.request",
+      requestId: "pair-state-change",
+      pairingId: offer.pairingId,
+      pairingSecret: offer.pairingSecret,
+      device: { id: "phone-state", name: "LVM Phone" },
+    }));
+    await expectMessage(client, "pair.pending");
+    const approved = expectMessage(client, "pair.approved");
+    const snapshot = expectMessage(client, "state.snapshot");
+    server.approvePairing(offer.pairingId);
+    await approved;
+    await snapshot;
+
+    const changed = {
+      ...initialState,
+      current: { itemIndex: 0, slideIndex: 1, slideCount: 3 },
+    };
+    const stateChanged = expectMessage(client, "state.changed");
+    server.broadcastState(changed);
+    expect((await stateChanged).state).toEqual(changed);
+    client.close();
+  });
 });
 
 async function connect(url: string): Promise<WebSocket> {
