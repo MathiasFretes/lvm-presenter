@@ -1,6 +1,6 @@
 import { get } from "svelte/store"
 import type { ContentProviderId } from "../../electron/contentProviders/base/types"
-import type { ToMainSendPayloads } from "../../types/IPC/ToMain"
+import type { ToMainSendPayloads, LvmRemotePresentationState } from "../../types/IPC/ToMain"
 import { ToMain } from "../../types/IPC/ToMain"
 import type { Project } from "../../types/Projects"
 import type { Show, Slide } from "../../types/Show"
@@ -162,6 +162,45 @@ export const mainResponses: MainResponses = {
     // MAIN
     [ToMain.MENU]: (a) => menuClick(a),
     [ToMain.API]: async (a) => await API_ACTIONS[a.action]?.(a.data),
+    [ToMain.LVM_REMOTE_ACTION]: (a) => {
+        const action = {
+            next: () => API_ACTIONS.next_slide(),
+            previous: () => API_ACTIONS.previous_slide(),
+            goTo: () => API_ACTIONS.index_select_slide({ index: a.slideIndex ?? 0 }),
+            clear: () => API_ACTIONS.clear_all(),
+            restore: () => API_ACTIONS.restore_output()
+        }[a.command as Exclude<typeof a.command, "snapshot">]
+        // Asking a remote client for the current state must never change the
+        // live output. In particular, it must not restore an active blackout.
+        action?.()
+        const allOutputs = get(outputs)
+        const configuredOutputId = getActiveOutputs(allOutputs, true, false, true)[0]
+        // A projected slide is the source of truth for the remote. Prefer it
+        // over a merely selected show and over an output's enabled flag: an
+        // operator can keep a presentation on screen while changing the
+        // selection in the main window.
+        const projected = Object.entries(allOutputs).find(([_, candidate]: any) => candidate?.out?.slide && !candidate.stageOutput)
+        const activeOutputId = projected?.[0] || configuredOutputId
+        const output: any = activeOutputId ? allOutputs[activeOutputId] : null
+        const slide = output?.out?.slide
+        const active: any = get(activeShow)
+        // `slide.id` is the show currently projected. Fall back to the
+        // operator selection only while no slide has reached an output yet.
+        const showId = slide?.id || active?.id
+        const show: any = showId ? get(showsCache)[showId] : null
+        const state: LvmRemotePresentationState = {
+            show: showId ? { id: showId, title: show?.name || "Presentación" } : null,
+            current: slide && typeof slide.index === "number"
+                ? {
+                    itemIndex: active?.index ?? 0,
+                    slideIndex: slide.index,
+                    slideCount: Math.max(1, Object.keys(show?.slides || {}).length)
+                }
+                : null,
+            output: { isLive: Boolean(activeOutputId && output?.active), isCleared: !slide }
+        }
+        return state
+    },
     [Main.DATA_PATH]: (a) => dataPath.set(a),
     [ToMain.ALERT]: (a) => {
         alertMessage.set(a || "")

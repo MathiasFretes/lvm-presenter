@@ -279,6 +279,10 @@ export class RemoteTransportServer {
         requestId: message.requestId,
         state,
       });
+      // Keep every approved device in sync, including devices that did not
+      // originate the command. The originating client receives the immediate
+      // command result above and then the shared state update.
+      this.broadcastState(state);
     } catch (error) {
       const code =
         error instanceof RemotePairingFailure ? error.code : "no_presentation";
