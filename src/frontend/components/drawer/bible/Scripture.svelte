@@ -246,7 +246,7 @@
 
         if (!id) return
         if (data[id]) {
-            openBook()
+            if (!$openScripture) openBook()
             return
         }
 
@@ -261,7 +261,7 @@
             return
         }
 
-        openBook()
+        if (!$openScripture) openBook()
     }
 
     // WIP similar to getSplittedVerses in scripture.ts
@@ -440,21 +440,26 @@
     // WIP move this?
     // select book & chapter when opening bible show reference
     $: if ($openScripture) setTimeout(openReference, 200)
-    function openReference() {
-        if ($openScripture?.book === undefined) {
+    async function openReference() {
+        const requestedReference = $openScripture
+        if (requestedReference?.book === undefined) {
             openScripture.set(null)
             return
         }
 
-        if ($openScripture.play) playWhenLoaded = true
+        if (!previewBibleId) return
+        if (!data[previewBibleId]?.bibleData) await loadScripture(previewBibleId)
+        if (!data[previewBibleId]?.bibleData || $openScripture !== requestedReference) return
 
-        let verses = $openScripture.verses
+        if (requestedReference.play) playWhenLoaded = true
+
+        let verses = requestedReference.verses
         if (!Array.isArray(verses)) verses = [[1]]
         if (!Array.isArray(verses[0])) verses = [verses]
 
-        openBook(Number($openScripture.book), [$openScripture.chapter], verses)
+        const opened = await openBook(Number(requestedReference.book), [requestedReference.chapter], verses)
 
-        openScripture.set(null)
+        if (opened && $openScripture === requestedReference) openScripture.set(null)
     }
 
     /// HISTORY ///

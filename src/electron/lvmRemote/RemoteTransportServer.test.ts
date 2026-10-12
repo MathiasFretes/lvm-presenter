@@ -5,6 +5,7 @@ import {
   RemoteTransportServer,
   type RemotePresentationState,
 } from "./RemoteTransportServer";
+import { RemotePairingService } from "./RemotePairingService";
 import {
   applyCultoQaCommand,
   createCultoQaState,
@@ -87,6 +88,79 @@ describe("RemoteTransportServer", () => {
     expect(applied).toEqual(["next"]);
     expect(appliedMessage.state).toEqual(initialState);
     client.close();
+  });
+
+  it("rejects an approval after its pairing QR expires", async () => {
+    let now = 1_000;
+    const server = new RemoteTransportServer({
+      pairing: new RemotePairingService({ now: () => now, pairingLifetimeMs: 100 }),
+      initialState: () => initialState,
+      onCommand: () => initialState,
+    });
+    servers.push(server);
+    const port = await server.start();
+    const offer = server.createPairing();
+    const client = await connect(`ws://127.0.0.1:${port}/lvm-remote/0.1`);
+    client.send(JSON.stringify({
+      schemaVersion: "0.1",
+      type: "pair.request",
+      pairingId: offer.pairingId,
+      pairingSecret: offer.pairingSecret,
+      device: { id: "phone-expired", name: "LVM Phone" },
+    }));
+    await expectMessage(client, "pair.pending");
+
+    now = 1_101;
+    const rejected = expectMessage(client, "pair.rejected");
+    expect(() => server.approvePairing(offer.pairingId)).toThrow("expired_pairing");
+    expect(await rejected).toMatchObject({ code: "expired_pairing" });
+  });
+
+  it("passes a Bible reference from an approved device", async () => {
+    const received: string[] = [];
+    const server = new RemoteTransportServer({
+      initialState: () => initialState,
+      onCommand: ({ command, reference }) => {
+        if (command === "scripture") received.push(reference ?? "");
+        return initialState;
+      },
+    });
+    servers.push(server);
+    const port = await server.start();
+    const client = await pairClient(server, port, "bible-controller");
+
+    const applied = expectMessage(client.socket, "command.applied");
+    client.socket.send(JSON.stringify({
+      schemaVersion: "0.1",
+      type: "command.scripture",
+      sessionToken: client.sessionToken,
+      reference: "19.23.1",
+    }));
+
+    await applied;
+    expect(received).toEqual(["19.23.1"]);
+    client.socket.close();
+  });
+
+  it("rejects a malformed Bible reference", async () => {
+    const server = new RemoteTransportServer({
+      initialState: () => initialState,
+      onCommand: () => initialState,
+    });
+    servers.push(server);
+    const port = await server.start();
+    const client = await pairClient(server, port, "invalid-bible-controller");
+
+    const rejected = expectMessage(client.socket, "command.rejected");
+    client.socket.send(JSON.stringify({
+      schemaVersion: "0.1",
+      type: "command.scripture",
+      sessionToken: client.sessionToken,
+      reference: "../../invalid",
+    }));
+
+    expect(await rejected).toMatchObject({ code: "invalid_scripture_reference" });
+    client.socket.close();
   });
 
   it("rejects an invalid command and closes all listeners", async () => {

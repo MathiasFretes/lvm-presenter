@@ -5,7 +5,7 @@ export type RemoteDevice = {
     name: string
 }
 
-export type RemoteCommand = "next" | "previous" | "goTo" | "clear" | "restore"
+export type RemoteCommand = "next" | "previous" | "goTo" | "clear" | "restore" | "scripture"
 
 export type PairingOffer = {
     schemaVersion: "0.1"
@@ -160,7 +160,7 @@ export class RemotePairingService {
 }
 
 export function isRemoteCommand(value: unknown): value is RemoteCommand {
-    return value === "next" || value === "previous" || value === "goTo" || value === "clear" || value === "restore"
+    return value === "next" || value === "previous" || value === "goTo" || value === "clear" || value === "restore" || value === "scripture"
 }
 
 function isRemoteDevice(value: RemoteDevice): boolean {

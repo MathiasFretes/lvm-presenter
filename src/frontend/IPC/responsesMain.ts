@@ -162,17 +162,18 @@ export const mainResponses: MainResponses = {
     // MAIN
     [ToMain.MENU]: (a) => menuClick(a),
     [ToMain.API]: async (a) => await API_ACTIONS[a.action]?.(a.data),
-    [ToMain.LVM_REMOTE_ACTION]: (a) => {
+    [ToMain.LVM_REMOTE_ACTION]: async (a) => {
         const action = {
             next: () => API_ACTIONS.next_slide(),
             previous: () => API_ACTIONS.previous_slide(),
             goTo: () => API_ACTIONS.index_select_slide({ index: a.slideIndex ?? 0 }),
             clear: () => API_ACTIONS.clear_all(),
-            restore: () => API_ACTIONS.restore_output()
+            restore: () => API_ACTIONS.restore_output(),
+            scripture: () => API_ACTIONS.start_scripture({ reference: a.reference ?? "" })
         }[a.command as Exclude<typeof a.command, "snapshot">]
         // Asking a remote client for the current state must never change the
         // live output. In particular, it must not restore an active blackout.
-        action?.()
+        await action?.()
         const allOutputs = get(outputs)
         const configuredOutputId = getActiveOutputs(allOutputs, true, false, true)[0]
         // A projected slide is the source of truth for the remote. Prefer it
@@ -190,13 +191,14 @@ export const mainResponses: MainResponses = {
         const show: any = showId ? get(showsCache)[showId] : null
         const state: LvmRemotePresentationState = {
             show: showId ? { id: showId, title: show?.name || "Presentación" } : null,
-            current: slide && typeof slide.index === "number"
-                ? {
-                    itemIndex: active?.index ?? 0,
-                    slideIndex: slide.index,
-                    slideCount: Math.max(1, Object.keys(show?.slides || {}).length)
-                }
-                : null,
+            current:
+                slide && typeof slide.index === "number"
+                    ? {
+                          itemIndex: active?.index ?? 0,
+                          slideIndex: slide.index,
+                          slideCount: Math.max(1, Object.keys(show?.slides || {}).length)
+                      }
+                    : null,
             output: { isLive: Boolean(activeOutputId && output?.active), isCleared: !slide }
         }
         return state
