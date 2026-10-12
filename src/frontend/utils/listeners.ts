@@ -64,6 +64,8 @@ import {
 } from "../stores"
 import { hasNewerUpdate } from "./common"
 import { driveConnect } from "./drive"
+import { sendMain } from "../IPC/main"
+import { Main } from "../../types/IPC/Main"
 import { convertBackgrounds, getFilteredAudioChannels } from "./remoteTalk"
 import { send } from "./request"
 import { arrayToObject, eachConnection, filterObjectArray, sendData, timedout } from "./sendData"
@@ -84,6 +86,19 @@ function hasShowsListChanged(prevData: any, newData: any): boolean {
         }
     }
     return false
+}
+
+// The first-party LAN remote is intentionally independent from the inherited
+// remote server. Keep paired phones in sync with the output stores after their
+// values settle; a phone must not require an extra button press to discover a
+// presentation that was opened after pairing.
+let remotePublishTimer: ReturnType<typeof setTimeout> | null = null
+function publishLvmRemoteState() {
+    if (remotePublishTimer) clearTimeout(remotePublishTimer)
+    remotePublishTimer = setTimeout(() => {
+        remotePublishTimer = null
+        sendMain(Main.LVM_REMOTE_PUBLISH)
+    }, 50)
 }
 
 function copyShowsMetadata(data: any): any {
@@ -248,6 +263,7 @@ export function storeSubscriber() {
         // sendData(STAGE, { channel: "SLIDES" }, true)
         // send(STAGE, ["OUTPUTS"], data)
         // sendBackgroundToStage(a)
+        publishLvmRemoteState()
     })
     syncedOutputs.subscribe((data) => {
         send(OUTPUT, ["SYNCED_OUTPUTS"], data)
@@ -455,6 +471,7 @@ export function storeSubscriber() {
     })
 
     activeShow.subscribe((data) => {
+        publishLvmRemoteState()
         if (!data?.id) return
         const type = data?.type || "show"
         if (type !== "show") return

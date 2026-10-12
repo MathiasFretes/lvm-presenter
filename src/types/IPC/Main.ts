@@ -95,6 +95,7 @@ export enum Main {
     LVM_REMOTE_START = "LVM_REMOTE_START",
     LVM_REMOTE_STOP = "LVM_REMOTE_STOP",
     LVM_REMOTE_REFRESH = "LVM_REMOTE_REFRESH",
+    LVM_REMOTE_PUBLISH = "LVM_REMOTE_PUBLISH",
     LVM_REMOTE_STATUS = "LVM_REMOTE_STATUS",
     LVM_REMOTE_APPROVE = "LVM_REMOTE_APPROVE",
     DOES_MEDIA_EXIST = "DOES_MEDIA_EXIST",
@@ -226,6 +227,7 @@ export interface MainSendPayloads {
     [Main.GET_EMPTY_SHOWS]: { cached: Shows }
     [Main.OUTPUT]: "true" | "false"
     [Main.LVM_REMOTE_REFRESH]: undefined
+    [Main.LVM_REMOTE_PUBLISH]: undefined
     [Main.LVM_REMOTE_APPROVE]: { pairingId: string }
     [Main.DOES_MEDIA_EXIST]: { path: string; creationTime?: number; noCache?: boolean }
     [Main.GET_THUMBNAIL]: { input: string; size: number }
@@ -367,6 +369,7 @@ export interface MainReturnPayloads {
     [Main.LVM_REMOTE_START]: Promise<import("../../electron/lvmRemote/LvmRemoteManager").LvmRemoteStatus>
     [Main.LVM_REMOTE_STOP]: Promise<import("../../electron/lvmRemote/LvmRemoteManager").LvmRemoteStatus>
     [Main.LVM_REMOTE_REFRESH]: import("../../electron/lvmRemote/LvmRemoteManager").LvmRemoteStatus
+    [Main.LVM_REMOTE_PUBLISH]: undefined
     [Main.LVM_REMOTE_STATUS]: import("../../electron/lvmRemote/LvmRemoteManager").LvmRemoteStatus
     [Main.LVM_REMOTE_APPROVE]: Promise<import("../../electron/lvmRemote/LvmRemoteManager").LvmRemoteStatus>
     [Main.GET_GRAPHICS_DEVICES]: Promise<{ value: string; label: string }[]>

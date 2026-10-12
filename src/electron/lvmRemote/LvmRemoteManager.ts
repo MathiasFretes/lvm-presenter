@@ -74,6 +74,18 @@ export class LvmRemoteManager {
         return this.status()
     }
 
+    /**
+     * Renderer state changes are authoritative for an active presentation.
+     * Publish them to paired devices so a phone never remains stuck on the
+     * snapshot that happened to exist when it was paired.
+     */
+    async publishState() {
+        if (!this.server) return
+        const state = await this.readState()
+        this.latestState = state
+        this.server.broadcastState(state)
+    }
+
     private async readState(command?: "next" | "previous" | "goTo" | "clear" | "restore", slideIndex?: number) {
         const state = await requestToMain(ToMain.LVM_REMOTE_ACTION, { command: command ?? "snapshot", slideIndex })
         if (!state) throw new Error("remote_presentation_unavailable")

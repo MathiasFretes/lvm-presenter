@@ -133,6 +133,7 @@ export const mainResponses: MainResponses = {
         if (!address) throw new Error("remote_lan_address_unavailable")
         return lvmRemoteManager.refreshPairing(address)
     },
+    [Main.LVM_REMOTE_PUBLISH]: () => void lvmRemoteManager.publishState(),
     [Main.LVM_REMOTE_STATUS]: () => lvmRemoteManager.status(),
     [Main.LVM_REMOTE_APPROVE]: async (data) => lvmRemoteManager.approve(data.pairingId),
     // MEDIA
