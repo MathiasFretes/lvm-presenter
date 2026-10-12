@@ -53,6 +53,10 @@
         lvmRemote = (await requestMain(Main.LVM_REMOTE_STOP)) || lvmRemote
     }
 
+    async function refreshLvmRemotePairing() {
+        lvmRemote = (await requestMain(Main.LVM_REMOTE_REFRESH)) || lvmRemote
+    }
+
     async function approveLvmRemote() {
         if (!lvmRemote.pending?.pairingId) return
         lvmRemote = (await requestMain(Main.LVM_REMOTE_APPROVE, { pairingId: lvmRemote.pending.pairingId })) || lvmRemote
@@ -439,6 +443,11 @@
     <Tip type="info" value="Emparejamiento local activo. Compartí este enlace solo con el dispositivo que vas a aprobar." top={12} />
     <InputRow>
         <MaterialTextInput label="Enlace de emparejamiento" value={lvmRemote.pairingLink?.url || ""} readonly />
+    </InputRow>
+    <InputRow>
+        <MaterialButton style="flex: 1;" icon="refresh" on:click={refreshLvmRemotePairing}>
+            Generar un nuevo QR
+        </MaterialButton>
     </InputRow>
     {#if lvmRemoteQr}
         <div class="lvmRemoteQr" aria-label="Código QR de emparejamiento">

@@ -169,13 +169,17 @@ export const mainResponses: MainResponses = {
             goTo: () => API_ACTIONS.index_select_slide({ index: a.slideIndex ?? 0 }),
             clear: () => API_ACTIONS.clear_all(),
             restore: () => API_ACTIONS.restore_output()
-        }[a.command]
-        action()
+        }[a.command as Exclude<typeof a.command, "snapshot">]
+        // Asking a remote client for the current state must never change the
+        // live output. In particular, it must not restore an active blackout.
+        action?.()
         const activeOutputId = getActiveOutputs(get(outputs), true, false, true)[0]
         const output: any = activeOutputId ? get(outputs)[activeOutputId] : null
         const slide = output?.out?.slide
         const active: any = get(activeShow)
-        const showId = slide?.id || active?.id
+        // `activeShow` is the presentation selected by the operator. A slide
+        // reference can be a group/item identifier, which is not a show ID.
+        const showId = active?.id || slide?.id
         const show: any = showId ? get(showsCache)[showId] : null
         const state: LvmRemotePresentationState = {
             show: showId ? { id: showId, title: show?.name || "Presentación" } : null,

@@ -128,6 +128,11 @@ export const mainResponses: MainResponses = {
         return await lvmRemoteManager.start(address, (pending) => sendToMain(ToMain.LVM_REMOTE_PAIRING_PENDING, pending))
     },
     [Main.LVM_REMOTE_STOP]: async () => await lvmRemoteManager.stop(),
+    [Main.LVM_REMOTE_REFRESH]: () => {
+        const address = getLocalIPs().find((value) => /^192\.168\.|^10\.|^172\.(1[6-9]|2\d|3[0-1])\./.test(value))
+        if (!address) throw new Error("remote_lan_address_unavailable")
+        return lvmRemoteManager.refreshPairing(address)
+    },
     [Main.LVM_REMOTE_STATUS]: () => lvmRemoteManager.status(),
     [Main.LVM_REMOTE_APPROVE]: async (data) => lvmRemoteManager.approve(data.pairingId),
     // MEDIA

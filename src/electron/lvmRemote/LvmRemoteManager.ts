@@ -64,8 +64,18 @@ export class LvmRemoteManager {
         return this.status()
     }
 
+    refreshPairing(lanAddress: string) {
+        if (!this.server || !this.statusValue.port) throw new Error("remote_transport_not_started")
+        this.statusValue = {
+            ...this.statusValue,
+            pairingLink: this.server.createPairingLink(lanAddress, this.statusValue.port),
+            pending: null
+        }
+        return this.status()
+    }
+
     private async readState(command?: "next" | "previous" | "goTo" | "clear" | "restore", slideIndex?: number) {
-        const state = await requestToMain(ToMain.LVM_REMOTE_ACTION, { command: command ?? "restore", slideIndex })
+        const state = await requestToMain(ToMain.LVM_REMOTE_ACTION, { command: command ?? "snapshot", slideIndex })
         if (!state) throw new Error("remote_presentation_unavailable")
         return state
     }
