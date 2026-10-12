@@ -136,7 +136,12 @@ describe("RemoteTransportServer", () => {
     };
     const stateChanged = expectMessage(client, "state.changed");
     server.broadcastState(changed);
-    expect((await stateChanged).state).toEqual(changed);
+    const message = await stateChanged;
+    expect({
+      show: message.show,
+      current: message.current,
+      output: message.output,
+    }).toEqual(changed);
     client.close();
   });
 });
