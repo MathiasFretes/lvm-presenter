@@ -16,6 +16,7 @@ import { addDrawerFolder } from "../components/helpers/dropActions"
 import { history } from "../components/helpers/history"
 import { captureCanvas, getExtension, getFileName, removeExtension, setMediaTracks } from "../components/helpers/media"
 import { getActiveOutputs } from "../components/helpers/output"
+import { openProjectItem } from "../components/show/project"
 import { loadShows, saveTextCache } from "../components/helpers/setShow"
 import { checkName, getGlobalGroup, getLabelId } from "../components/helpers/show"
 import { joinTimeBig } from "../components/helpers/time"
@@ -98,6 +99,7 @@ import { updateSettings, updateSyncedSettings, updateThemeValues } from "../util
 import type { MainReturnPayloads } from "./../../types/IPC/Main"
 import { Main } from "./../../types/IPC/Main"
 import { sendMain } from "./main"
+import { buildLvmRemoteSnapshot } from "./lvmRemoteSnapshot"
 
 type MainHandler<ID extends Main | ToMain> = (data: ID extends keyof ToMainSendPayloads ? ToMainSendPayloads[ID] : ID extends keyof MainReturnPayloads ? Awaited<MainReturnPayloads[ID]> : undefined) => void
 export type MainResponses = {
@@ -168,10 +170,29 @@ export const mainResponses: MainResponses = {
         // live. Remote goTo must target the projected show, not that selection.
         const liveSlide: any = Object.values(get(outputs)).find((candidate: any) => candidate?.out?.slide && !candidate.stageOutput)?.out?.slide
         const remoteShowId = liveSlide?.id || get(activeShow)?.id
+        const selectedProjectId = get(activeProject)
+        const remoteProjectId = selectedProjectId && get(projects)[selectedProjectId]?.shows.some((ref) => ref.id === remoteShowId)
+            ? selectedProjectId
+            : Object.keys(get(projects)).find((id) => get(projects)[id].shows.some((ref) => ref.id === remoteShowId)) || selectedProjectId
         const action = {
             next: () => API_ACTIONS.next_slide(),
             previous: () => API_ACTIONS.previous_slide(),
             goTo: () => API_ACTIONS.index_select_slide({ index: a.slideIndex ?? 0, showId: remoteShowId }),
+            goToItem: async () => {
+                const index = a.itemIndex ?? -1
+                const ref = remoteProjectId ? get(projects)[remoteProjectId]?.shows[index] : undefined
+                if (!ref || (ref.type || "show") !== "show") throw new Error("remote_item_unavailable")
+                await loadShows([ref.id])
+                const item = buildLvmRemoteSnapshot({
+                    projects: get(projects), selectedProjectId: remoteProjectId, shows: get(showsCache),
+                    showId: ref.id, isLive: false, isCleared: false
+                }).items?.[index]
+                const slideIndex = a.slideIndex ?? 0
+                if (!item?.slides[slideIndex]) throw new Error("remote_slide_unavailable")
+                activeProject.set(remoteProjectId!)
+                openProjectItem(remoteProjectId!, index)
+                await API_ACTIONS.index_select_slide({ index: slideIndex, showId: ref.id, layoutId: ref.layout })
+            },
             clear: () => API_ACTIONS.clear_all(),
             restore: () => API_ACTIONS.restore_output(),
             scripture: () => API_ACTIONS.start_scripture({ reference: a.reference ?? "" })
@@ -181,7 +202,7 @@ export const mainResponses: MainResponses = {
         await action?.()
         // OutputHelper.advanceOutputs writes the slide on the next event-loop
         // turn. Wait for that write before acknowledging a navigation command.
-        if (a.command === "next" || a.command === "previous") await new Promise((resolve) => setTimeout(resolve, 0))
+        if (a.command === "next" || a.command === "previous" || a.command === "goToItem") await new Promise((resolve) => setTimeout(resolve, 0))
         const allOutputs = get(outputs)
         const configuredOutputId = getActiveOutputs(allOutputs, true, false, true)[0]
         // A projected slide is the source of truth for the remote. Prefer it
@@ -199,18 +220,18 @@ export const mainResponses: MainResponses = {
         // `slide.id` is the show currently projected. Fall back to the
         // operator selection only while no slide has reached an output yet.
         const showId = slide?.id || active?.id
-        const show: any = showId ? get(showsCache)[showId] : null
-        const state: LvmRemotePresentationState = {
-            show: showId ? { id: showId, title: show?.name || "Presentación" } : null,
-            current: slide && typeof slide.index === "number"
-                ? {
-                    itemIndex: active?.index ?? 0,
-                    slideIndex: slide.index,
-                    slideCount: Math.max(1, Object.keys(show?.slides || {}).length)
-                }
-                : null,
-            output: { isLive: Boolean(activeOutputId && output?.active), isCleared: !projectedSlide }
-        }
+        const projectId = remoteProjectId
+        const projectShows = projectId ? get(projects)[projectId]?.shows || [] : []
+        await loadShows(projectShows.filter((ref) => (ref.type || "show") === "show").map((ref) => ref.id))
+        const state: LvmRemotePresentationState = buildLvmRemoteSnapshot({
+            projects: get(projects),
+            selectedProjectId: projectId,
+            shows: get(showsCache),
+            showId,
+            projectedSlide: slide,
+            isLive: Boolean(activeOutputId && output?.active),
+            isCleared: !projectedSlide
+        })
         return state
     },
     [Main.DATA_PATH]: (a) => dataPath.set(a),

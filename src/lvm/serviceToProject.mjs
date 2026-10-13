@@ -184,7 +184,7 @@ export function serviceToProject(service) {
             layouts: { [LAYOUT_ID]: { name: "Servicio", notes: "", slides: slides.map(({ id: slideId }) => ({ id: slideId })) } },
             media: {}
         }
-        refs.push({ id, name: title, type: "show" })
+        refs.push({ id, name: title, type: "show", data: { lvmServiceKind: item.kind } })
     }
 
     return {

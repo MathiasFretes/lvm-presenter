@@ -24,7 +24,7 @@ export class LvmRemoteManager {
         return this.statusValue
     }
 
-    async start(lanAddress: string, onPairingPending: (pending: PairingPending) => void) {
+    async start(lanAddress: string, onPairingPending: (pending: PairingPending) => void, port = 4319) {
         await this.stop()
         this.latestState = await this.readState()
         const server = new RemoteTransportServer({
@@ -33,18 +33,18 @@ export class LvmRemoteManager {
                 this.statusValue = { ...this.statusValue, pending }
                 onPairingPending(pending)
             },
-            onCommand: async ({ command, slideIndex, reference }) => {
-                const state = await this.readState(command, slideIndex, reference)
+            onCommand: async ({ command, slideIndex, itemIndex, reference }) => {
+                const state = await this.readState(command, slideIndex, itemIndex, reference)
                 this.latestState = state
                 return state
             }
         })
-        const port = await server.start(4319)
+        const boundPort = await server.start(port)
         this.server = server
         this.statusValue = {
             active: true,
-            port,
-            pairingLink: server.createPairingLink(lanAddress, port),
+            port: boundPort,
+            pairingLink: server.createPairingLink(lanAddress, boundPort),
             pending: null
         }
         return this.status()
@@ -99,8 +99,8 @@ export class LvmRemoteManager {
         this.server.broadcastState(state)
     }
 
-    private async readState(command?: "next" | "previous" | "goTo" | "clear" | "restore" | "scripture", slideIndex?: number, reference?: string) {
-        const state = await requestToMain(ToMain.LVM_REMOTE_ACTION, { command: command ?? "snapshot", slideIndex, reference })
+    private async readState(command?: "next" | "previous" | "goTo" | "goToItem" | "clear" | "restore" | "scripture", slideIndex?: number, itemIndex?: number, reference?: string) {
+        const state = await requestToMain(ToMain.LVM_REMOTE_ACTION, { command: command ?? "snapshot", slideIndex, itemIndex, reference })
         if (!state) throw new Error("remote_presentation_unavailable")
         return state
     }
