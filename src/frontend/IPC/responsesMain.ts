@@ -61,6 +61,7 @@ import {
     lessonsLoaded,
     media,
     mediaDownloads,
+    outputCache,
     outputs,
     overlays,
     pdfImports,
@@ -162,17 +163,25 @@ export const mainResponses: MainResponses = {
     // MAIN
     [ToMain.MENU]: (a) => menuClick(a),
     [ToMain.API]: async (a) => await API_ACTIONS[a.action]?.(a.data),
-    [ToMain.LVM_REMOTE_ACTION]: (a) => {
+    [ToMain.LVM_REMOTE_ACTION]: async (a) => {
+        // The operator can select another show while a different one remains
+        // live. Remote goTo must target the projected show, not that selection.
+        const liveSlide: any = Object.values(get(outputs)).find((candidate: any) => candidate?.out?.slide && !candidate.stageOutput)?.out?.slide
+        const remoteShowId = liveSlide?.id || get(activeShow)?.id
         const action = {
             next: () => API_ACTIONS.next_slide(),
             previous: () => API_ACTIONS.previous_slide(),
-            goTo: () => API_ACTIONS.index_select_slide({ index: a.slideIndex ?? 0 }),
+            goTo: () => API_ACTIONS.index_select_slide({ index: a.slideIndex ?? 0, showId: remoteShowId }),
             clear: () => API_ACTIONS.clear_all(),
-            restore: () => API_ACTIONS.restore_output()
+            restore: () => API_ACTIONS.restore_output(),
+            scripture: () => API_ACTIONS.start_scripture({ reference: a.reference ?? "" })
         }[a.command as Exclude<typeof a.command, "snapshot">]
         // Asking a remote client for the current state must never change the
         // live output. In particular, it must not restore an active blackout.
-        action?.()
+        await action?.()
+        // OutputHelper.advanceOutputs writes the slide on the next event-loop
+        // turn. Wait for that write before acknowledging a navigation command.
+        if (a.command === "next" || a.command === "previous") await new Promise((resolve) => setTimeout(resolve, 0))
         const allOutputs = get(outputs)
         const configuredOutputId = getActiveOutputs(allOutputs, true, false, true)[0]
         // A projected slide is the source of truth for the remote. Prefer it
@@ -182,7 +191,10 @@ export const mainResponses: MainResponses = {
         const projected = Object.entries(allOutputs).find(([_, candidate]: any) => candidate?.out?.slide && !candidate.stageOutput)
         const activeOutputId = projected?.[0] || configuredOutputId
         const output: any = activeOutputId ? allOutputs[activeOutputId] : null
-        const slide = output?.out?.slide
+        const projectedSlide = output?.out?.slide
+        // Clear stores the previous output for Restore. Keep its position in
+        // the remote snapshot while the physical output is black.
+        const slide = projectedSlide || get(outputCache)?.[activeOutputId]?.slide
         const active: any = get(activeShow)
         // `slide.id` is the show currently projected. Fall back to the
         // operator selection only while no slide has reached an output yet.
@@ -197,7 +209,7 @@ export const mainResponses: MainResponses = {
                     slideCount: Math.max(1, Object.keys(show?.slides || {}).length)
                 }
                 : null,
-            output: { isLive: Boolean(activeOutputId && output?.active), isCleared: !slide }
+            output: { isLive: Boolean(activeOutputId && output?.active), isCleared: !projectedSlide }
         }
         return state
     },

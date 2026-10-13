@@ -123,13 +123,13 @@ export const mainResponses: MainResponses = {
     [Main.OUTPUT]: (_, e) => (e.sender.id === getMainWindow()?.webContents.id ? "false" : "true"),
     [Main.LVM_NDI_STATUS]: () => LvmNdiBridge.snapshot(),
     [Main.LVM_REMOTE_START]: async () => {
-        const address = getLocalIPs().find((value) => /^192\.168\.|^10\.|^172\.(1[6-9]|2\d|3[0-1])\./.test(value))
+        const address = getLvmRemoteLanAddress()
         if (!address) throw new Error("remote_lan_address_unavailable")
         return await lvmRemoteManager.start(address, (pending) => sendToMain(ToMain.LVM_REMOTE_PAIRING_PENDING, pending))
     },
     [Main.LVM_REMOTE_STOP]: async () => await lvmRemoteManager.stop(),
     [Main.LVM_REMOTE_REFRESH]: () => {
-        const address = getLocalIPs().find((value) => /^192\.168\.|^10\.|^172\.(1[6-9]|2\d|3[0-1])\./.test(value))
+        const address = getLvmRemoteLanAddress()
         if (!address) throw new Error("remote_lan_address_unavailable")
         return lvmRemoteManager.refreshPairing(address)
     },
@@ -306,6 +306,15 @@ export const mainResponses: MainResponses = {
     [Main.AI_SETUP]: (data) => aiHandleLocalSetup(data),
     [Main.AI_SET_KEY]: (data) => setAiKey(data),
     [Main.AI_LLM_COMPLETE]: (data) => completeLLM(data)
+}
+
+function getLvmRemoteLanAddress() {
+    const privateAddresses = getLocalIPs().filter((value) => /^192\.168\.|^10\.|^172\.(1[6-9]|2\d|3[0-1])\./.test(value))
+
+    // Windows Mobile Hotspot uses 192.168.137.1 by default. Prefer it while
+    // active so the QR points to the network that the phone can actually
+    // reach instead of an upstream Wi-Fi adapter isolated by the router.
+    return privateAddresses.find((value) => value.startsWith("192.168.137.")) || privateAddresses[0]
 }
 
 /// ///////

@@ -71,7 +71,7 @@ export interface ToMainSendPayloads {
     [ToMain.WEBSOCKET]: "connected"
     [ToMain.AUDIO_METADATA]: { filePath: string; metadata: ICommonTagsResult }
     [ToMain.GET_DYNAMIC_VALUES]: string[]
-    [ToMain.LVM_REMOTE_ACTION]: { command: "snapshot" | "next" | "previous" | "goTo" | "clear" | "restore"; slideIndex?: number }
+    [ToMain.LVM_REMOTE_ACTION]: { command: "snapshot" | "next" | "previous" | "goTo" | "clear" | "restore" | "scripture"; slideIndex?: number; reference?: string }
     [ToMain.LVM_REMOTE_PAIRING_PENDING]: { pairingId: string; device: { id: string; name: string } }
     ///
     [ToMain.IMPORT2]: { channel: string; data: ({ content: Buffer | string | object; name?: string; extension?: string } | string)[]; custom?: any }

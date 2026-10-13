@@ -23,6 +23,7 @@ export type RemotePresentationState = {
 export type RemoteCommandRequest = {
   command: RemoteCommand;
   slideIndex?: number;
+  reference?: string;
   session: RemoteSession;
 };
 
@@ -46,6 +47,7 @@ type RemoteMessage = {
   pairingSecret?: string;
   device?: { id?: string; name?: string };
   slideIndex?: number;
+  reference?: string;
 };
 
 /**
@@ -152,7 +154,18 @@ export class RemoteTransportServer {
     if (!socket || socket.readyState !== WebSocket.OPEN)
       throw new Error("remote_pairing_socket_unavailable");
 
-    const session = this.pairing.approvePairing(pairingId);
+    let session: RemoteSession;
+    try {
+      session = this.pairing.approvePairing(pairingId);
+    } catch (error) {
+      this.pendingSockets.delete(pairingId);
+      this.send(socket, {
+        type: "pair.rejected",
+        code: error instanceof RemotePairingFailure ? error.code : "invalid_pairing",
+      });
+      socket.close();
+      throw error;
+    }
     this.pendingSockets.delete(pairingId);
     this.authorizedSockets.set(socket, session.token);
     this.send(socket, {
@@ -266,12 +279,26 @@ export class RemoteTransportServer {
         });
         return;
       }
+      if (
+        command === "scripture" &&
+        (typeof message.reference !== "string" ||
+          message.reference.length > 80 ||
+          !/^\d+\.\d+\.\d+(?:,\d+)*$/.test(message.reference))
+      ) {
+        this.send(socket, {
+          type: "command.rejected",
+          requestId: message.requestId,
+          code: "invalid_scripture_reference",
+        });
+        return;
+      }
 
       const session = this.pairing.authorize(message.sessionToken);
       this.authorizedSockets.set(socket, session.token);
       const state = await this.onCommand({
         command,
         slideIndex: message.slideIndex,
+        reference: message.reference,
         session,
       });
       this.send(socket, {

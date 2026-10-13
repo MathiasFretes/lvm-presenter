@@ -1,7 +1,7 @@
 import { requestToMain } from "../IPC/main"
 import { ToMain, type LvmRemotePresentationState } from "../../types/IPC/ToMain"
 import { RemoteTransportServer, type PairingLink } from "./RemoteTransportServer"
-import type { PairingPending } from "./RemotePairingService"
+import { RemotePairingFailure, type PairingPending } from "./RemotePairingService"
 
 export type LvmRemoteStatus = {
     active: boolean
@@ -33,8 +33,8 @@ export class LvmRemoteManager {
                 this.statusValue = { ...this.statusValue, pending }
                 onPairingPending(pending)
             },
-            onCommand: async ({ command, slideIndex }) => {
-                const state = await this.readState(command, slideIndex)
+            onCommand: async ({ command, slideIndex, reference }) => {
+                const state = await this.readState(command, slideIndex, reference)
                 this.latestState = state
                 return state
             }
@@ -59,7 +59,20 @@ export class LvmRemoteManager {
 
     approve(pairingId: string) {
         if (!this.server) throw new Error("remote_transport_not_started")
-        this.server.approvePairing(pairingId)
+        try {
+            this.server.approvePairing(pairingId)
+        } catch (error) {
+            if (!(error instanceof RemotePairingFailure) || error.code !== "expired_pairing") throw error
+            // A request can expire while its approval button is visible. Give
+            // the phone an explicit rejection and replace the expired QR.
+            const address = this.statusValue.pairingLink && new URL(this.statusValue.pairingLink.url).searchParams.get("host")
+            if (address && this.statusValue.port) {
+                this.statusValue = {
+                    ...this.statusValue,
+                    pairingLink: this.server.createPairingLink(address, this.statusValue.port)
+                }
+            }
+        }
         this.statusValue = { ...this.statusValue, pending: null }
         return this.status()
     }
@@ -86,8 +99,8 @@ export class LvmRemoteManager {
         this.server.broadcastState(state)
     }
 
-    private async readState(command?: "next" | "previous" | "goTo" | "clear" | "restore", slideIndex?: number) {
-        const state = await requestToMain(ToMain.LVM_REMOTE_ACTION, { command: command ?? "snapshot", slideIndex })
+    private async readState(command?: "next" | "previous" | "goTo" | "clear" | "restore" | "scripture", slideIndex?: number, reference?: string) {
+        const state = await requestToMain(ToMain.LVM_REMOTE_ACTION, { command: command ?? "snapshot", slideIndex, reference })
         if (!state) throw new Error("remote_presentation_unavailable")
         return state
     }
