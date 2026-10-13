@@ -290,24 +290,31 @@ describe("RemoteTransportServer", () => {
     reconnectedClient.socket.close();
   });
 
-  it("rejects a valid remote command before local approval", async () => {
+  it("rejects every remote control command before local approval", async () => {
+    const applied: string[] = [];
     const server = new RemoteTransportServer({
       initialState: () => initialState,
-      onCommand: () => initialState,
+      onCommand: ({ command }) => {
+        applied.push(command);
+        return initialState;
+      },
     });
     servers.push(server);
     const port = await server.start();
     const client = await connect(`ws://127.0.0.1:${port}/lvm-remote/0.1`);
 
-    client.send(
-      JSON.stringify({
+    for (const command of ["next", "previous", "goTo", "clear", "restore"]) {
+      client.send(JSON.stringify({
         schemaVersion: "0.1",
-        type: "command.next",
-        requestId: "unapproved-next",
-      }),
-    );
-    const rejected = await expectMessage(client, "command.rejected");
-    expect(rejected.code).toBe("unauthorized");
+        type: `command.${command}`,
+        requestId: `unapproved-${command}`,
+        ...(command === "goTo" ? { slideIndex: 1 } : {}),
+      }));
+      const rejected = await expectMessage(client, "command.rejected");
+      expect(rejected.code).toBe("unauthorized");
+      expect(rejected.requestId).toBe(`unapproved-${command}`);
+    }
+    expect(applied).toEqual([]);
     client.close();
   });
 
