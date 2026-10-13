@@ -8,27 +8,42 @@
       {
         "id": "lvm-culto-hostil-2026-09-27-song-1",
         "name": "Señor, aquí estás 😀",
-        "type": "show"
+        "type": "show",
+        "data": {
+          "lvmServiceKind": "SONG"
+        }
       },
       {
         "id": "lvm-culto-hostil-2026-09-27-scripture-1",
         "name": "Salmo 23:1",
-        "type": "show"
+        "type": "show",
+        "data": {
+          "lvmServiceKind": "SCRIPTURE"
+        }
       },
       {
         "id": "lvm-culto-hostil-2026-09-27-scripture-2",
         "name": "Salmo 23:2",
-        "type": "show"
+        "type": "show",
+        "data": {
+          "lvmServiceKind": "SCRIPTURE"
+        }
       },
       {
         "id": "lvm-culto-hostil-2026-09-27-announcement-1",
         "name": "Reunión de jóvenes",
-        "type": "show"
+        "type": "show",
+        "data": {
+          "lvmServiceKind": "ANNOUNCEMENT"
+        }
       },
       {
         "id": "lvm-culto-hostil-2026-09-27-sermon-1",
         "name": "El buen pastor",
-        "type": "show"
+        "type": "show",
+        "data": {
+          "lvmServiceKind": "SERMON"
+        }
       }
     ]
   },

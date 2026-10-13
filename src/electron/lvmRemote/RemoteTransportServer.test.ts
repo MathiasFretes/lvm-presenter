@@ -142,6 +142,46 @@ describe("RemoteTransportServer", () => {
     client.socket.close();
   });
 
+  it("allows an approved device to select a project item and slide", async () => {
+    const received: { itemIndex?: number; slideIndex?: number }[] = [];
+    const server = new RemoteTransportServer({
+      initialState: () => initialState,
+      onCommand: ({ itemIndex, slideIndex }) => {
+        received.push({ itemIndex, slideIndex });
+        return initialState;
+      },
+    });
+    servers.push(server);
+    const port = await server.start();
+    const client = await pairClient(server, port, "order-controller");
+
+    const applied = expectMessage(client.socket, "command.applied");
+    client.socket.send(JSON.stringify({
+      schemaVersion: "0.1",
+      type: "command.goToItem",
+      sessionToken: client.sessionToken,
+      itemIndex: 2,
+      slideIndex: 1,
+    }));
+    await applied;
+    expect(received).toEqual([{ itemIndex: 2, slideIndex: 1 }]);
+    client.socket.close();
+  });
+
+  it("rejects item selection without approval", async () => {
+    const server = new RemoteTransportServer({
+      initialState: () => initialState,
+      onCommand: () => initialState,
+    });
+    servers.push(server);
+    const port = await server.start();
+    const socket = await connect(`ws://127.0.0.1:${port}/lvm-remote/0.1`);
+    const rejected = expectMessage(socket, "command.rejected");
+    socket.send(JSON.stringify({ schemaVersion: "0.1", type: "command.goToItem", itemIndex: 0 }));
+    expect(await rejected).toMatchObject({ code: "unauthorized" });
+    socket.close();
+  });
+
   it("rejects a malformed Bible reference", async () => {
     const server = new RemoteTransportServer({
       initialState: () => initialState,

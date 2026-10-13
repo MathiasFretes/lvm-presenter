@@ -8,32 +8,50 @@
       {
         "id": "lvm-culto-2026-09-27-song-1",
         "name": "Canto de ejemplo",
-        "type": "show"
+        "type": "show",
+        "data": {
+          "lvmServiceKind": "SONG"
+        }
       },
       {
         "id": "lvm-culto-2026-09-27-song-2",
         "name": "Segundo canto de ejemplo",
-        "type": "show"
+        "type": "show",
+        "data": {
+          "lvmServiceKind": "SONG"
+        }
       },
       {
         "id": "lvm-culto-2026-09-27-song-3",
         "name": "Tercer canto de ejemplo",
-        "type": "show"
+        "type": "show",
+        "data": {
+          "lvmServiceKind": "SONG"
+        }
       },
       {
         "id": "lvm-culto-2026-09-27-scripture-1",
         "name": "Salmo 23:1",
-        "type": "show"
+        "type": "show",
+        "data": {
+          "lvmServiceKind": "SCRIPTURE"
+        }
       },
       {
         "id": "lvm-culto-2026-09-27-announcement-1",
         "name": "Encuentro de jóvenes",
-        "type": "show"
+        "type": "show",
+        "data": {
+          "lvmServiceKind": "ANNOUNCEMENT"
+        }
       },
       {
         "id": "lvm-culto-2026-09-27-sermon-1",
         "name": "El buen pastor",
-        "type": "show"
+        "type": "show",
+        "data": {
+          "lvmServiceKind": "SERMON"
+        }
       }
     ]
   },
