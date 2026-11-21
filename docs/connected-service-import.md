@@ -23,3 +23,5 @@ Remove-Item Env:LVM_SERVICE_JSON
 La compilación Vite sola no prepara `public/index.html` para Electron productivo; el flujo completo de build/postbuild debe seleccionar el bundle generado. Las pruebas deben ejecutarse con esa entrada productiva y devolver luego la entrada fuente al repositorio si la preparación la modificó.
 
 La vista previa de la aplicación no demuestra una salida física, un instalador firmado ni la sincronización automática del escritorio con PostgreSQL. Esos gates permanecen separados.
+
+También pasó el archivo `network-resolved-service.json` generado después de editar sin red, recargar, resolver un 409 real y confirmar la incorporación desde Service. La prueba comprueba el número de elementos, sus tipos en orden y la unicidad de IDs en el proyecto guardado antes del reinicio. El caso conserva una bienvenida y dos apariciones de la misma canción; la letra sigue visible tras reiniciar offline. SHA-256 del archivo comprobado: `C175B42E6904F2BF4AEF2175F6E4C458EFDD56A74B8CB4052228205C33D32CC9`.

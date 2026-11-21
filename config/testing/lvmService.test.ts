@@ -140,11 +140,15 @@ test("imports Service JSON directly, restarts offline, and presents its lyrics",
                 async () => {
                     await window.keyboard.press("Control+s")
                     const stored = JSON.parse(await readFile(join(settings.name, "projects.json"), "utf8"))
-                    return Object.values(stored.projects || {}).some((project: any) => project.name === service.title)
+                    return Object.values(stored.projects || {}).some((project: any) => project.name === service.title && project.shows?.length === service.items.length)
                 },
                 { timeout: 30000, intervals: [2000] }
             )
             .toBe(true)
+        const saved = JSON.parse(await readFile(join(settings.name, "projects.json"), "utf8"))
+        const imported: any = Object.values(saved.projects || {}).find((project: any) => project.name === service.title)
+        expect(imported.shows.map((show: any) => show.data?.lvmServiceKind)).toEqual(service.items.map((item: any) => item.kind))
+        expect(new Set(imported.shows.map((show: any) => show.id)).size).toBe(service.items.length)
         await closeApp(app)
 
         app = await electron.launch({ args: [".", "--no-sandbox"], env: environment })
