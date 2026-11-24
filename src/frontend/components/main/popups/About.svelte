@@ -1,4 +1,5 @@
 <script lang="ts">
+    import BrandIdentity from "../BrandIdentity.svelte"
     import { activePopup, version } from "../../../stores"
     import T from "../../helpers/T.svelte"
     import Link from "../../inputs/Link.svelte"
@@ -23,10 +24,7 @@
 </script>
 
 <div style="text-align: center;">
-    <div class="logo">
-        <img style="height: 35px;" src="./import-logos/lvmpresenter.webp" alt="LVM Presenter-logo" draggable={false} />
-        <h1 style="color: var(--text);font-size: 1.7em;">LVM Presenter</h1>
-    </div>
+    <BrandIdentity />
 
     <p style="font-size: 0.8em;margin-top: 2px;">
         <span style="opacity: 0.8;">v{$version}</span>
@@ -87,15 +85,6 @@
         display: flex;
         flex-direction: column;
         gap: 5px;
-    }
-
-    .logo {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 0px 10px;
-        width: 100%;
-        gap: 10px;
     }
 
     h5 {

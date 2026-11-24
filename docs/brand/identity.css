@@ -1,0 +1,8 @@
+/* Shared compact LVM identity; product layouts remain independent. */
+:root {
+  --lvm-brand-emblem-size: 40px;
+  --lvm-brand-lockup-gap: 12px;
+  --lvm-brand-name-size: 15px;
+  --lvm-brand-product-size: 12px;
+  --lvm-brand-nav-gap: 24px;
+}
