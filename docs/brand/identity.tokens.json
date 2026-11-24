@@ -1,0 +1,20 @@
+{
+  "compact": {
+    "emblem": 40,
+    "gap": 12,
+    "name": 15,
+    "product": 12
+  },
+  "navGap": 24,
+  "minimumTouchTarget": 44,
+  "name": "La Voz Misionera",
+  "symbol": "#FFFFFF",
+  "background": [
+    "#B28A3D",
+    "#D5B36A",
+    "#EFDEB3"
+  ],
+  "navy": "#1C2A39",
+  "accent": "#C6A15B",
+  "textGoldOnLight": "#825C18"
+}

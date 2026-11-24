@@ -1,4 +1,5 @@
 <script lang="ts">
+    import BrandIdentity from "./BrandIdentity.svelte"
     import { activeProfile, os, profiles, special } from "../../stores"
     import { newToast, wait } from "../../utils/common"
     import { translateText } from "../../utils/language"
@@ -47,7 +48,7 @@
 </script>
 
 <div class="profiles" style="top: {isWindows ? '25px' : '0'};height: {isWindows ? 'calc(100% - 25px)' : '100%'};">
-    <h1>LVM Presenter</h1>
+    <BrandIdentity />
     <p style="opacity: 0.8;margin-bottom: 20px;"><T id="profile.choose_profile" /></p>
 
     <div class="flex">
@@ -68,11 +69,6 @@
 </div>
 
 <style>
-    h1 {
-        font-size: 5em;
-        overflow: initial;
-    }
-
     p {
         font-size: 1.2em;
         overflow: initial;

@@ -19,3 +19,13 @@ Android, iOS y las PWA pueden aplicar su propia máscara exterior. Se conserva e
 ## Interfaces 60–30–10
 
 60% superficies neutras de lectura, 30% azul estructural #1C2A39 y 10% acentos dorados #C6A15B. El dorado de texto sobre blanco usa #825C18. No cambiar colores de estados, letras/acordes ni salida proyectada por esta actualización del logo.
+
+## Componente compacto compartido
+
+Emblema de 40 px, separación símbolo/texto de 12 px, nombre de 15 px y producto de 12 px. Navegación separada de la marca por 24 px. Estos valores son la escala inicial; el texto respeta el escalado accesible de cada plataforma. Poppins en web/Flutter; tipografía del sistema en Expo/SwiftUI según las guías nativas existentes. Las cabeceras públicas, paneles de trabajo y pantallas nativas conservan su distribución funcional.
+
+`identity.tokens.json` registra las mismas decisiones en todos los repositorios; `identity.css` las expone a web. El nombre de producto es texto independiente del archivo del emblema. No reducir el emblema de cabecera a 24 px para acomodar enlaces: usar la navegación móvil existente.
+
+## Microicono 16–32 px
+
+`lvm-micro.svg` amplía uniformemente el símbolo dentro del mismo círculo (escala 0,94 frente a 0,82). Conserva trazados, paloma en negativo, blanco y fondo aprobados. Se limita a favicons e iconos de 16–32 px; el logo oficial y los launchers mayores no cambian. No garantiza que todos los detalles se distingan a 16 px.
