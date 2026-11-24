@@ -18,11 +18,14 @@ export type RemotePresentationState = {
   show: { id: string; title: string } | null;
   current: { itemIndex: number; slideIndex: number; slideCount: number } | null;
   output: { isLive: boolean; isCleared: boolean };
+  project?: { id: string; title: string } | null;
+  items?: { id: string; index: number; title: string; kind: string; slides: { id: string; index: number; label: string }[] }[];
 };
 
 export type RemoteCommandRequest = {
   command: RemoteCommand;
   slideIndex?: number;
+  itemIndex?: number;
   reference?: string;
   session: RemoteSession;
 };
@@ -47,6 +50,7 @@ type RemoteMessage = {
   pairingSecret?: string;
   device?: { id?: string; name?: string };
   slideIndex?: number;
+  itemIndex?: number;
   reference?: string;
 };
 
@@ -280,6 +284,20 @@ export class RemoteTransportServer {
         return;
       }
       if (
+        command === "goToItem" &&
+        (!Number.isInteger(message.itemIndex) ||
+          (message.itemIndex ?? -1) < 0 ||
+          (message.slideIndex !== undefined &&
+            (!Number.isInteger(message.slideIndex) || message.slideIndex < 0)))
+      ) {
+        this.send(socket, {
+          type: "command.rejected",
+          requestId: message.requestId,
+          code: "invalid_item",
+        });
+        return;
+      }
+      if (
         command === "scripture" &&
         (typeof message.reference !== "string" ||
           message.reference.length > 80 ||
@@ -298,6 +316,7 @@ export class RemoteTransportServer {
       const state = await this.onCommand({
         command,
         slideIndex: message.slideIndex,
+        itemIndex: message.itemIndex,
         reference: message.reference,
         session,
       });

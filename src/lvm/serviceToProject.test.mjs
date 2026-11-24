@@ -15,6 +15,8 @@ const hostileProject = JSON.parse(await readFile(new URL("../../examples/hostile
 test("example is a six item LVM Presenter project with ordered slides", () => {
     assert.equal(example.project.shows.length, 6)
     assert.equal(Object.keys(example.shows).length, 6)
+    assert.deepEqual(example.project.shows.map((ref) => ref.data?.lvmServiceKind),
+        ["SONG", "SONG", "SONG", "SCRIPTURE", "ANNOUNCEMENT", "SERMON"])
     assert.deepEqual(
         example.project.shows.map(({ name }) => name),
         ["Canto de ejemplo", "Segundo canto de ejemplo", "Tercer canto de ejemplo", "Salmo 23:1", "Encuentro de jóvenes", "El buen pastor"]

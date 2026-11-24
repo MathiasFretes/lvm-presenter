@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url'
 import { setTimeout as delay } from 'node:timers/promises'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
+const storesUrl = `/@fs/${path.join(root, 'src/frontend/stores.ts').replaceAll('\\', '/')}`
 const cache = path.join(root, 'node_modules', '.cache')
 const electronExe = path.join(root, 'node_modules', 'electron', 'dist', 'electron.exe')
 if (!existsSync(electronExe) || !existsSync(path.join(root, 'build', 'electron', 'index.js')))
@@ -53,10 +54,10 @@ const response = (socket, type, accept = () => true) => new Promise((resolve, re
   }
   socket.on('message', onMessage)
 })
-const send = async (socket, token, command, slideIndex) => {
+const send = async (socket, token, command, slideIndex, itemIndex) => {
   const received = response(socket, 'command.applied')
   socket.send(JSON.stringify({ schemaVersion: '0.1', type: `command.${command}`, requestId: `${command}-${Date.now()}`,
-    sessionToken: token, ...(slideIndex === undefined ? {} : { slideIndex }) }))
+    sessionToken: token, ...(slideIndex === undefined ? {} : { slideIndex }), ...(itemIndex === undefined ? {} : { itemIndex }) }))
   return (await received).state
 }
 const expectSlide = (state, index, cleared = false) => {
@@ -67,7 +68,7 @@ const mainManager = (operation, value) => app.evaluate(async (_electron, request
   const path = process.getBuiltinModule('node:path')
   const require = process.getBuiltinModule('node:module').createRequire(path.join(process.cwd(), 'build/electron/index.js'))
   const manager = require(path.join(process.cwd(), 'build/electron/lvmRemote/LvmRemoteManager.js')).lvmRemoteManager
-  if (request.operation === 'start') return manager.start(request.value || '127.0.0.1', () => {})
+  if (request.operation === 'start') return manager.start(request.value || '127.0.0.1', () => {}, Number(process.env.LVM_REMOTE_QA_PORT || 4319))
   if (request.operation === 'approve') return manager.approve(request.value)
   if (request.operation === 'refresh') return manager.refreshPairing(request.value || '127.0.0.1')
   if (request.operation === 'publish') return manager.publishState()
@@ -110,6 +111,25 @@ try {
     await startShow(id)
   }, { id: showId, fixture: show })
   await delay(1500)
+
+  if (process.env.LVM_REMOTE_RICH_QA === '1') {
+    await window.evaluate(async ({ id, fixture, storesUrl }) => {
+      const { setShow } = await import('/src/frontend/components/helpers/setShow.ts')
+      const { projects, activeProject, activeShow } = await import(storesUrl)
+      await setShow(id, fixture)
+      const project = {
+        name: 'Culto de prueba', created: Date.now(), parent: '/', shows: [
+          { id: 'lvm-remote-culto-qa', name: 'Canto QA', type: 'show', data: { lvmServiceKind: 'SONG' } },
+          { id, name: 'Salmo 23', type: 'show', data: { lvmServiceKind: 'SCRIPTURE' } }
+        ]
+      }
+      projects.update((all) => ({ ...all, 'lvm-remote-project-qa': project }))
+      activeProject.set('lvm-remote-project-qa')
+      activeShow.set({ ...project.shows[0], index: 0 })
+    }, { id: 'lvm-remote-scripture-qa', storesUrl, fixture: { ...show, name: 'Salmo 23',
+      slides: { 'scripture-slide': { ...show.slides['slide-1'], group: 'Escritura' } },
+      layouts: { default: { name: 'Default', notes: '', slides: [{ id: 'scripture-slide' }] } } } })
+  }
 
   const phoneQa = process.env.LVM_REMOTE_PHONE_QA === '1'
   const status = await mainManager('start', phoneQa ? process.env.LVM_REMOTE_LAN_ADDRESS : undefined)
@@ -185,6 +205,17 @@ try {
   await mainManager('approve', status.pairingLink.pairingId)
   const token = (await approved).sessionToken
   expectSlide(await initial, 0)
+  if (process.env.LVM_REMOTE_RICH_QA === '1') {
+    const richState = await mainManager('state')
+    if (richState.project?.title !== 'Culto de prueba' || richState.items?.length !== 2 ||
+        richState.items[0].kind !== 'song' || richState.items[1].kind !== 'scripture' ||
+        richState.items[1].slides[0]?.label !== 'Escritura')
+      throw new Error(`Unexpected rich project snapshot: ${JSON.stringify(richState)}`)
+    const scripture = await send(socket, token, 'goToItem', 0, 1)
+    if (scripture.show?.id !== 'lvm-remote-scripture-qa' || scripture.current?.itemIndex !== 1)
+      throw new Error(`Remote item navigation failed: ${JSON.stringify(scripture)}`)
+    expectSlide(await send(socket, token, 'goToItem', 0, 0), 0)
+  }
   expectSlide(await send(socket, token, 'next'), 1)
   expectSlide(await send(socket, token, 'next'), 2)
   expectSlide(await send(socket, token, 'previous'), 1)

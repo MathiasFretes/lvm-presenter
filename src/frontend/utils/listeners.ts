@@ -423,6 +423,7 @@ export function storeSubscriber() {
     })
 
     projects.subscribe((a) => {
+        publishLvmRemoteState()
         sendData(REMOTE, { channel: "PROJECTS" }, true)
 
         // dynamic values
@@ -432,6 +433,7 @@ export function storeSubscriber() {
         send(REMOTE, ["FOLDERS"], { folders: data, opened: get(openedFolders) })
     })
     activeProject.subscribe((a) => {
+        publishLvmRemoteState()
         send(REMOTE, ["PROJECT"], a)
 
         // dynamic values

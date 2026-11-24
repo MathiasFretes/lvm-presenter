@@ -13,17 +13,29 @@ import { translateText } from "../utils/language"
 import { confirmCustom } from "../utils/popup"
 import { audioExtensions, mediaExtensions } from "../values/extensions"
 import { newToast } from "../utils/common"
+import { parseProjectImport } from "../../lvm/projectImport.mjs"
 
 export function importProject(files: { content: string; path?: string; name?: string; extension?: string }[]) {
-    files.forEach(({ content, path }) => {
-        const { project, parentFolder, shows, overlays, effects, actions, media, categories } = JSON.parse(content)
-        if (!project) return
+    let imports: { path?: string; data: ReturnType<typeof parseProjectImport> }[]
+    try {
+        // Validate the whole batch before adding any shows or projects.
+        imports = files.map(({ content, path }) => ({ path, data: parseProjectImport(content) }))
+    } catch (error) {
+        console.error("Cannot import project", error)
+        if (get(activePopup)) {
+            alertMessage.set("error.import")
+            activePopup.set("alert")
+        } else newToast("error.import")
+        return
+    }
+    imports.forEach(({ data: imported, path: sourcePath }) => {
+        const { project, parentFolder, shows, overlays, effects, actions, media, categories } = imported
 
         // find any parent folder with the same name as previous parent, or place at root
         if (parentFolder) project.parent = Object.entries(get(folders)).find(([_id, folder]) => folder.name === parentFolder)?.[0] || "/"
         const projectId = project.id || ""
         delete project.id
-        if (path) project.sourcePath = path
+        if (sourcePath) project.sourcePath = sourcePath
 
         // create any missing categories
         if (categories) {
